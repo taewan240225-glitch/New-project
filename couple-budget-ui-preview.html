@@ -1,0 +1,796 @@
+﻿<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>遺遺 媛怨꾨? UI Preview</title>
+  <style>
+    :root {
+      --bg: #f6f7f9;
+      --panel: #ffffff;
+      --ink: #172026;
+      --muted: #66717d;
+      --line: #d9dee5;
+      --income: #147d64;
+      --expense: #c3453c;
+      --saving: #315da8;
+      --accent: #805b2f;
+      --soft-green: #e7f4ef;
+      --soft-red: #fae9e7;
+      --soft-blue: #e8eef9;
+      --soft-gold: #f5ebdc;
+      --shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: "Segoe UI", "Malgun Gothic", Arial, sans-serif;
+      line-height: 1.5;
+    }
+
+    button,
+    input,
+    select {
+      font: inherit;
+    }
+
+    .app {
+      min-height: 100vh;
+      display: grid;
+      grid-template-columns: 248px minmax(0, 1fr);
+    }
+
+    .sidebar {
+      background: #172026;
+      color: #ffffff;
+      padding: 24px 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 26px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 800;
+      font-size: 20px;
+    }
+
+    .brand-mark {
+      width: 34px;
+      height: 34px;
+      border-radius: 8px;
+      background: #f0b85a;
+      color: #172026;
+      display: grid;
+      place-items: center;
+      font-weight: 900;
+    }
+
+    .nav {
+      display: grid;
+      gap: 6px;
+    }
+
+    .nav button {
+      min-height: 42px;
+      border: 0;
+      border-radius: 8px;
+      background: transparent;
+      color: #cbd5df;
+      text-align: left;
+      padding: 0 12px;
+      cursor: pointer;
+    }
+
+    .nav button.active {
+      background: #26323c;
+      color: #ffffff;
+    }
+
+    .household {
+      margin-top: auto;
+      border-top: 1px solid rgba(255, 255, 255, 0.12);
+      padding-top: 18px;
+      display: grid;
+      gap: 12px;
+    }
+
+    .person {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      color: #dce3ea;
+      font-size: 14px;
+    }
+
+    .avatar {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      display: inline-grid;
+      place-items: center;
+      font-size: 12px;
+      font-weight: 800;
+      color: #172026;
+      background: #f0b85a;
+      margin-right: 8px;
+    }
+
+    main {
+      min-width: 0;
+      padding: 24px;
+      display: grid;
+      gap: 18px;
+    }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      align-items: flex-start;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 28px;
+      line-height: 1.2;
+      letter-spacing: 0;
+    }
+
+    .subtitle {
+      margin: 6px 0 0;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      gap: 10px;
+    }
+
+    .btn {
+      min-height: 40px;
+      border-radius: 8px;
+      border: 1px solid var(--line);
+      background: var(--panel);
+      color: var(--ink);
+      padding: 0 14px;
+      cursor: pointer;
+      box-shadow: var(--shadow);
+    }
+
+    .btn.primary {
+      border-color: #172026;
+      background: #172026;
+      color: #ffffff;
+    }
+
+    .toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 14px;
+      box-shadow: var(--shadow);
+    }
+
+    .field-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    label {
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    select,
+    input {
+      min-height: 38px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #ffffff;
+      color: var(--ink);
+      padding: 0 10px;
+    }
+
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(150px, 1fr));
+      gap: 12px;
+    }
+
+    .metric {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 16px;
+      box-shadow: var(--shadow);
+      min-height: 116px;
+      display: grid;
+      gap: 10px;
+    }
+
+    .metric .label {
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .metric .value {
+      font-size: 24px;
+      font-weight: 850;
+      line-height: 1.15;
+    }
+
+    .metric .note {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .metric.income {
+      background: var(--soft-green);
+    }
+
+    .metric.expense {
+      background: var(--soft-red);
+    }
+
+    .metric.saving {
+      background: var(--soft-blue);
+    }
+
+    .metric.shared {
+      background: var(--soft-gold);
+    }
+
+    .content-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.35fr) minmax(320px, 0.65fr);
+      gap: 14px;
+      align-items: start;
+    }
+
+    .section {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .section-header {
+      min-height: 56px;
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+    }
+
+    h2 {
+      margin: 0;
+      font-size: 17px;
+      letter-spacing: 0;
+    }
+
+    .tabs {
+      display: inline-flex;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow: hidden;
+      background: #ffffff;
+    }
+
+    .tabs button {
+      min-height: 34px;
+      border: 0;
+      border-right: 1px solid var(--line);
+      background: #ffffff;
+      color: var(--muted);
+      padding: 0 12px;
+      cursor: pointer;
+    }
+
+    .tabs button:last-child {
+      border-right: 0;
+    }
+
+    .tabs button.active {
+      background: #172026;
+      color: #ffffff;
+    }
+
+    .quick-form {
+      padding: 16px;
+      display: grid;
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+      gap: 10px;
+      border-bottom: 1px solid var(--line);
+      background: #fbfcfd;
+    }
+
+    .quick-form .wide {
+      grid-column: span 2;
+    }
+
+    .quick-form button {
+      min-height: 38px;
+      border: 0;
+      border-radius: 8px;
+      background: #172026;
+      color: #ffffff;
+      cursor: pointer;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+    }
+
+    th,
+    td {
+      padding: 13px 16px;
+      border-bottom: 1px solid var(--line);
+      text-align: left;
+      vertical-align: middle;
+      font-size: 14px;
+    }
+
+    th {
+      color: var(--muted);
+      font-size: 12px;
+      text-transform: uppercase;
+      background: #fbfcfd;
+    }
+
+    .amount {
+      font-weight: 800;
+      text-align: right;
+      white-space: nowrap;
+    }
+
+    .amount.income {
+      color: var(--income);
+    }
+
+    .amount.expense {
+      color: var(--expense);
+    }
+
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      min-height: 24px;
+      border-radius: 999px;
+      padding: 0 9px;
+      background: #edf0f3;
+      color: #3f4b55;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .owner {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--muted);
+    }
+
+    .side-stack {
+      display: grid;
+      gap: 14px;
+    }
+
+    .budget-list,
+    .activity-list {
+      padding: 14px 16px;
+      display: grid;
+      gap: 14px;
+    }
+
+    .budget-item {
+      display: grid;
+      gap: 7px;
+    }
+
+    .budget-line {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 12px;
+      font-size: 14px;
+    }
+
+    .budget-line strong {
+      font-size: 15px;
+    }
+
+    .bar {
+      height: 9px;
+      border-radius: 999px;
+      background: #e6eaf0;
+      overflow: hidden;
+    }
+
+    .bar span {
+      display: block;
+      height: 100%;
+      border-radius: inherit;
+    }
+
+    .bar.food span {
+      width: 74%;
+      background: var(--expense);
+    }
+
+    .bar.home span {
+      width: 48%;
+      background: var(--saving);
+    }
+
+    .bar.child span {
+      width: 61%;
+      background: var(--accent);
+    }
+
+    .activity {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      font-size: 14px;
+    }
+
+    .dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: var(--saving);
+      margin-top: 6px;
+      flex: 0 0 auto;
+    }
+
+    .activity p {
+      margin: 0;
+    }
+
+    .activity small {
+      color: var(--muted);
+    }
+
+    .mobile-list {
+      display: none;
+      padding: 12px;
+      gap: 10px;
+    }
+
+    .transaction-card {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 12px;
+      display: grid;
+      gap: 8px;
+      background: #ffffff;
+    }
+
+    .transaction-card .row {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    @media (max-width: 1100px) {
+      .app {
+        grid-template-columns: 1fr;
+      }
+
+      .sidebar {
+        position: static;
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+        gap: 14px;
+        padding: 14px 18px;
+      }
+
+      .nav {
+        display: none;
+      }
+
+      .household {
+        margin-top: 0;
+        border-top: 0;
+        padding-top: 0;
+        grid-template-columns: repeat(2, auto);
+      }
+
+      .content-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 760px) {
+      main {
+        padding: 14px;
+      }
+
+      .topbar,
+      .toolbar {
+        align-items: stretch;
+        flex-direction: column;
+      }
+
+      .actions,
+      .field-row {
+        justify-content: stretch;
+      }
+
+      .btn,
+      select,
+      input {
+        width: 100%;
+      }
+
+      .summary-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .quick-form {
+        grid-template-columns: 1fr;
+      }
+
+      .quick-form .wide {
+        grid-column: auto;
+      }
+
+      .desktop-table {
+        display: none;
+      }
+
+      .mobile-list {
+        display: grid;
+      }
+
+      .sidebar {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      .household {
+        grid-template-columns: 1fr;
+        width: 100%;
+      }
+
+      h1 {
+        font-size: 24px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar" aria-label="媛怨꾨? 硫붾돱">
+      <div class="brand">
+        <span class="brand-mark">??/span>
+        <span>?좊땲???媛怨꾨?</span>
+      </div>
+      <nav class="nav">
+        <button class="active" type="button">??쒕낫??/button>
+        <button type="button">嫄곕옒 ?댁뿭</button>
+        <button type="button">?덉궛</button>
+        <button type="button">?뺤궛</button>
+        <button type="button">?ㅼ젙</button>
+      </nav>
+      <div class="household">
+        <div class="person"><span><span class="avatar">??/span>源?쒖셿</span><strong>愿由ъ옄</strong></div>
+        <div class="person"><span><span class="avatar">諛?/span>諛곗슦??/span><strong>?몄쭛 媛??/strong></div>
+      </div>
+    </aside>
+
+    <main>
+      <header class="topbar">
+        <div>
+          <h1>2026??5??怨듬룞 媛怨꾨?</h1>
+          <p class="subtitle">遺遺媛 ?④퍡 ?낅젰?섍퀬, ?덉궛怨?吏異??먮쫫?????붾㈃?먯꽌 ?뺤씤?⑸땲??</p>
+        </div>
+        <div class="actions">
+          <button class="btn" type="button">珥덈? 留곹겕</button>
+          <button class="btn" type="button">CSV ?대낫?닿린</button>
+          <button class="btn primary" type="button">嫄곕옒 異붽?</button>
+        </div>
+      </header>
+
+      <section class="toolbar" aria-label="?붾퀎 ?꾪꽣">
+        <div class="field-row">
+          <label for="month">???좏깮</label>
+          <select id="month">
+            <option>2026??5??/option>
+            <option>2026??4??/option>
+            <option>2026??3??/option>
+          </select>
+          <label for="owner">?묒꽦??/label>
+          <select id="owner">
+            <option>?꾩껜</option>
+            <option>源?쒖셿</option>
+            <option>諛곗슦??/option>
+          </select>
+        </div>
+        <div class="field-row">
+          <label for="search">寃??/label>
+          <input id="search" type="search" placeholder="留덊듃, 蹂묒썝, ?붽툒">
+        </div>
+      </section>
+
+      <section class="summary-grid" aria-label="???붿빟">
+        <article class="metric income">
+          <span class="label">?대쾲 ???섏엯</span>
+          <span class="value">6,200,000??/span>
+          <span class="note">吏?쒕떖 ?鍮?+320,000??/span>
+        </article>
+        <article class="metric expense">
+          <span class="label">?대쾲 ??吏異?/span>
+          <span class="value">3,840,500??/span>
+          <span class="note">?덉궛??68% ?ъ슜</span>
+        </article>
+        <article class="metric saving">
+          <span class="label">?⑥? 湲덉븸</span>
+          <span class="value">2,359,500??/span>
+          <span class="note">?異?紐⑺몴源뚯? 640,500??/span>
+        </article>
+        <article class="metric shared">
+          <span class="label">怨듬룞 吏異?鍮꾩쑉</span>
+          <span class="value">72%</span>
+          <span class="note">媛쒖씤 吏異?28%</span>
+        </article>
+      </section>
+
+      <section class="content-grid">
+        <div class="section">
+          <div class="section-header">
+            <h2>嫄곕옒 ?댁뿭</h2>
+            <div class="tabs" aria-label="嫄곕옒 ?좏삎">
+              <button class="active" type="button">?꾩껜</button>
+              <button type="button">?섏엯</button>
+              <button type="button">吏異?/button>
+            </div>
+          </div>
+
+          <form class="quick-form">
+            <input type="date" value="2026-05-10" aria-label="?좎쭨">
+            <select aria-label="?좏삎">
+              <option>吏異?/option>
+              <option>?섏엯</option>
+            </select>
+            <select aria-label="移댄뀒怨좊━">
+              <option>?앸퉬</option>
+              <option>二쇨굅</option>
+              <option>援먰넻</option>
+              <option>?섎즺</option>
+            </select>
+            <input type="text" value="源?쒖셿" aria-label="?묒꽦??>
+            <input class="wide" type="text" placeholder="硫붾え">
+            <button type="button">異붽?</button>
+          </form>
+
+          <table class="desktop-table">
+            <thead>
+              <tr>
+                <th style="width: 112px;">?좎쭨</th>
+                <th style="width: 120px;">移댄뀒怨좊━</th>
+                <th>?댁슜</th>
+                <th style="width: 120px;">?묒꽦??/th>
+                <th style="width: 130px; text-align: right;">湲덉븸</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>05.10</td>
+                <td><span class="tag">?앸퉬</span></td>
+                <td>二쇰쭚 ?λ낫湲?/td>
+                <td><span class="owner">源?쒖셿</span></td>
+                <td class="amount expense">-86,400??/td>
+              </tr>
+              <tr>
+                <td>05.09</td>
+                <td><span class="tag">二쇨굅</span></td>
+                <td>愿由щ퉬 ?먮룞?댁껜</td>
+                <td><span class="owner">怨듬룞</span></td>
+                <td class="amount expense">-214,000??/td>
+              </tr>
+              <tr>
+                <td>05.08</td>
+                <td><span class="tag">?섏엯</span></td>
+                <td>湲됱뿬 ?낃툑</td>
+                <td><span class="owner">諛곗슦??/span></td>
+                <td class="amount income">+3,100,000??/td>
+              </tr>
+              <tr>
+                <td>05.07</td>
+                <td><span class="tag">?섎즺</span></td>
+                <td>移섍낵 吏꾨즺</td>
+                <td><span class="owner">源?쒖셿</span></td>
+                <td class="amount expense">-72,000??/td>
+              </tr>
+            </tbody>
+          </table>
+
+          <div class="mobile-list" aria-label="紐⑤컮??嫄곕옒 移대뱶">
+            <article class="transaction-card">
+              <div class="row"><strong>二쇰쭚 ?λ낫湲?/strong><span class="amount expense">-86,400??/span></div>
+              <div class="row"><span class="tag">?앸퉬</span><span>05.10 쨌 源?쒖셿</span></div>
+            </article>
+            <article class="transaction-card">
+              <div class="row"><strong>湲됱뿬 ?낃툑</strong><span class="amount income">+3,100,000??/span></div>
+              <div class="row"><span class="tag">?섏엯</span><span>05.08 쨌 諛곗슦??/span></div>
+            </article>
+          </div>
+        </div>
+
+        <aside class="side-stack">
+          <section class="section">
+            <div class="section-header">
+              <h2>?덉궛 ?ъ슜瑜?/h2>
+              <button class="btn" type="button">?몄쭛</button>
+            </div>
+            <div class="budget-list">
+              <div class="budget-item">
+                <div class="budget-line"><strong>?앸퉬</strong><span>744,000 / 1,000,000??/span></div>
+                <div class="bar food"><span></span></div>
+              </div>
+              <div class="budget-item">
+                <div class="budget-line"><strong>二쇨굅</strong><span>480,000 / 1,000,000??/span></div>
+                <div class="bar home"><span></span></div>
+              </div>
+              <div class="budget-item">
+                <div class="budget-line"><strong>?≪븘/媛議?/strong><span>305,000 / 500,000??/span></div>
+                <div class="bar child"><span></span></div>
+              </div>
+            </div>
+          </section>
+
+          <section class="section">
+            <div class="section-header">
+              <h2>理쒓렐 怨듬룞 ?묒뾽</h2>
+            </div>
+            <div class="activity-list">
+              <div class="activity">
+                <span class="dot"></span>
+                <p><strong>諛곗슦??/strong>媛 愿由щ퉬 ??ぉ??異붽??덉뒿?덈떎.<br><small>?ㅻ뒛 09:22</small></p>
+              </div>
+              <div class="activity">
+                <span class="dot"></span>
+                <p><strong>源?쒖셿</strong>???앸퉬 ?덉궛???섏젙?덉뒿?덈떎.<br><small>?댁젣 21:10</small></p>
+              </div>
+              <div class="activity">
+                <span class="dot"></span>
+                <p><strong>怨듬룞</strong> ?異?紐⑺몴媛 3,000,000?먯쑝濡??ㅼ젙?섏뿀?듬땲??<br><small>5??1??/small></p>
+              </div>
+            </div>
+          </section>
+        </aside>
+      </section>
+    </main>
+  </div>
+</body>
+</html>
+

@@ -1,0 +1,903 @@
+﻿<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>遺遺 媛怨꾨? ?꾩껜 ?섏씠吏 Preview</title>
+  <style>
+    :root {
+      --bg: #f5f6f8;
+      --panel: #ffffff;
+      --ink: #18212a;
+      --muted: #66717d;
+      --line: #d9dee5;
+      --dark: #18212a;
+      --income: #13795b;
+      --expense: #bd4038;
+      --blue: #315da8;
+      --gold: #9a6a2f;
+      --soft-green: #e8f5ef;
+      --soft-red: #fae9e7;
+      --soft-blue: #e8eef9;
+      --soft-gold: #f7eddd;
+      --shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: "Segoe UI", "Malgun Gothic", Arial, sans-serif;
+      line-height: 1.5;
+    }
+
+    a { color: inherit; text-decoration: none; }
+    button, input, select { font: inherit; }
+
+    .app {
+      min-height: 100vh;
+      display: grid;
+      grid-template-columns: 244px minmax(0, 1fr);
+    }
+
+    .sidebar {
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      background: var(--dark);
+      color: #fff;
+      padding: 22px 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 20px;
+      font-weight: 850;
+    }
+
+    .mark {
+      width: 34px;
+      height: 34px;
+      border-radius: 8px;
+      background: #f0b85a;
+      color: var(--dark);
+      display: grid;
+      place-items: center;
+      font-weight: 900;
+    }
+
+    .nav {
+      display: grid;
+      gap: 6px;
+    }
+
+    .nav a {
+      min-height: 42px;
+      border-radius: 8px;
+      padding: 10px 12px;
+      color: #d4dce5;
+    }
+
+    .nav a:hover,
+    .nav a.active {
+      background: #27323d;
+      color: #fff;
+    }
+
+    .members {
+      margin-top: auto;
+      border-top: 1px solid rgba(255,255,255,.14);
+      padding-top: 16px;
+      display: grid;
+      gap: 10px;
+      font-size: 14px;
+    }
+
+    .member {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      color: #e6ebf0;
+    }
+
+    .avatar {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      display: inline-grid;
+      place-items: center;
+      margin-right: 8px;
+      background: #f0b85a;
+      color: var(--dark);
+      font-size: 12px;
+      font-weight: 850;
+    }
+
+    main {
+      min-width: 0;
+      padding: 24px;
+      display: grid;
+      gap: 24px;
+    }
+
+    .page {
+      min-height: calc(100vh - 48px);
+      display: grid;
+      gap: 16px;
+      align-content: start;
+      scroll-margin-top: 24px;
+    }
+
+    .page-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 16px;
+    }
+
+    h1, h2, h3, p { margin: 0; }
+    h1 { font-size: 28px; line-height: 1.2; letter-spacing: 0; }
+    h2 { font-size: 18px; letter-spacing: 0; }
+    h3 { font-size: 15px; letter-spacing: 0; }
+
+    .desc {
+      margin-top: 6px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .actions,
+    .row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      min-height: 38px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      color: var(--ink);
+      padding: 0 13px;
+      cursor: pointer;
+      box-shadow: var(--shadow);
+    }
+
+    .btn.primary {
+      border-color: var(--dark);
+      background: var(--dark);
+      color: #fff;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .panel-head {
+      min-height: 56px;
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .panel-body {
+      padding: 16px;
+    }
+
+    .toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+      padding: 14px;
+    }
+
+    label {
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 750;
+    }
+
+    input,
+    select {
+      min-height: 38px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      color: var(--ink);
+      padding: 0 10px;
+    }
+
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(150px, 1fr));
+      gap: 12px;
+    }
+
+    .metric {
+      min-height: 110px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 15px;
+      display: grid;
+      gap: 8px;
+      box-shadow: var(--shadow);
+    }
+
+    .metric small {
+      color: var(--muted);
+      font-weight: 750;
+    }
+
+    .metric strong {
+      font-size: 24px;
+      line-height: 1.15;
+    }
+
+    .metric span {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .green { background: var(--soft-green); }
+    .red { background: var(--soft-red); }
+    .blue { background: var(--soft-blue); }
+    .gold { background: var(--soft-gold); }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: minmax(0, 1.35fr) minmax(320px, .65fr);
+      gap: 14px;
+      align-items: start;
+    }
+
+    .grid-3 {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+    }
+
+    th, td {
+      padding: 13px 16px;
+      border-bottom: 1px solid var(--line);
+      text-align: left;
+      vertical-align: middle;
+      font-size: 14px;
+    }
+
+    th {
+      color: var(--muted);
+      background: #fbfcfd;
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .amount {
+      text-align: right;
+      white-space: nowrap;
+      font-weight: 850;
+    }
+
+    .amount.income { color: var(--income); }
+    .amount.expense { color: var(--expense); }
+
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      min-height: 24px;
+      border-radius: 999px;
+      background: #edf0f3;
+      color: #3f4b55;
+      padding: 0 9px;
+      font-size: 12px;
+      font-weight: 750;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .form-grid .wide { grid-column: span 2; }
+
+    .budget-item,
+    .setting-item,
+    .settlement-item,
+    .activity {
+      display: grid;
+      gap: 8px;
+      padding: 14px 0;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .budget-item:last-child,
+    .setting-item:last-child,
+    .settlement-item:last-child,
+    .activity:last-child {
+      border-bottom: 0;
+    }
+
+    .between {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .bar {
+      height: 10px;
+      border-radius: 999px;
+      overflow: hidden;
+      background: #e7ebf0;
+    }
+
+    .bar span {
+      display: block;
+      height: 100%;
+      border-radius: inherit;
+    }
+
+    .w74 { width: 74%; background: var(--expense); }
+    .w48 { width: 48%; background: var(--blue); }
+    .w61 { width: 61%; background: var(--gold); }
+    .w86 { width: 86%; background: var(--expense); }
+
+    .split-card {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 15px;
+      background: #fff;
+      display: grid;
+      gap: 10px;
+    }
+
+    .muted { color: var(--muted); }
+
+    .notice {
+      border: 1px solid #e3c78e;
+      border-radius: 8px;
+      background: #fff8e8;
+      padding: 14px 16px;
+      color: #6f4b18;
+      font-size: 14px;
+    }
+
+    .flow {
+      display: grid;
+      gap: 12px;
+    }
+
+    .flow-step {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      padding: 14px;
+      display: grid;
+      gap: 6px;
+    }
+
+    .chart {
+      height: 220px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background:
+        linear-gradient(to top, #eef1f5 1px, transparent 1px) 0 0 / 100% 25%,
+        #fff;
+      padding: 18px;
+      display: flex;
+      align-items: end;
+      gap: 14px;
+    }
+
+    .bar-col {
+      flex: 1;
+      min-width: 42px;
+      display: grid;
+      gap: 8px;
+      align-items: end;
+      text-align: center;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .bar-col i {
+      display: block;
+      width: 100%;
+      border-radius: 8px 8px 0 0;
+      background: var(--blue);
+    }
+
+    .asset-line {
+      height: 240px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background:
+        linear-gradient(to top, #eef1f5 1px, transparent 1px) 0 0 / 100% 25%,
+        #fff;
+      overflow: hidden;
+    }
+
+    .asset-line svg {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    @media (max-width: 1100px) {
+      .app { grid-template-columns: 1fr; }
+      .sidebar {
+        position: static;
+        height: auto;
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+      }
+      .nav { display: flex; overflow-x: auto; }
+      .members { display: none; }
+      .grid-2 { grid-template-columns: 1fr; }
+      .metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+
+    @media (max-width: 760px) {
+      main { padding: 14px; }
+      .page-head,
+      .toolbar,
+      .between {
+        align-items: stretch;
+        flex-direction: column;
+      }
+      .actions, .row { align-items: stretch; }
+      .btn, input, select { width: 100%; }
+      .metrics, .grid-3 { grid-template-columns: 1fr; }
+      .form-grid { grid-template-columns: 1fr; }
+      .form-grid .wide { grid-column: auto; }
+      .desktop-wide { overflow-x: auto; }
+      table { min-width: 760px; }
+      .chart { overflow-x: auto; }
+      h1 { font-size: 24px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <a class="brand" href="#dashboard"><span class="mark">??/span><span>?좊땲???媛怨꾨?</span></a>
+      <nav class="nav" aria-label="?붾㈃ ?대룞">
+        <a class="active" href="#dashboard">??쒕낫??/a>
+        <a href="#transactions">嫄곕옒 ?댁뿭</a>
+        <a href="#budgets">?덉궛</a>
+        <a href="#settlement">?뺤궛</a>
+        <a href="#deposits">?덉쟻湲?/a>
+        <a href="#housing">二쇳깮 ?먭툑</a>
+        <a href="#assets">?꾩껜 ?먯궛</a>
+        <a href="#settings">?ㅼ젙</a>
+      </nav>
+      <div class="members">
+        <div class="member"><span><span class="avatar">??/span>源?쒖셿</span><strong>愿由ъ옄</strong></div>
+        <div class="member"><span><span class="avatar">諛?/span>諛곗슦??/span><strong>?몄쭛 媛??/strong></div>
+      </div>
+    </aside>
+
+    <main>
+      <section class="page" id="dashboard">
+        <header class="page-head">
+          <div>
+            <h1>2026??5??怨듬룞 媛怨꾨?</h1>
+            <p class="desc">遺遺媛 ?④퍡 ?낅젰?섍퀬 ?붾퀎 ?먮쫫, ?덉궛, ?뺤궛 ?곹깭瑜??뺤씤?섎뒗 泥??붾㈃?낅땲??</p>
+          </div>
+          <div class="actions">
+            <button class="btn">珥덈? 留곹겕</button>
+            <button class="btn">CSV ?대낫?닿린</button>
+            <button class="btn primary">嫄곕옒 異붽?</button>
+          </div>
+        </header>
+
+        <section class="panel toolbar">
+          <div class="row">
+            <label for="dash-month">??/label>
+            <select id="dash-month"><option>2026??5??/option><option>2026??4??/option></select>
+            <label for="dash-owner">?묒꽦??/label>
+            <select id="dash-owner"><option>?꾩껜</option><option>源?쒖셿</option><option>諛곗슦??/option></select>
+          </div>
+          <div class="row">
+            <label for="dash-search">寃??/label>
+            <input id="dash-search" type="search" placeholder="留덊듃, 蹂묒썝, ?붽툒">
+          </div>
+        </section>
+
+        <section class="metrics">
+          <article class="metric green"><small>?섏엯</small><strong>6,200,000??/strong><span>吏?쒕떖 ?鍮?+320,000??/span></article>
+          <article class="metric red"><small>吏異?/small><strong>3,840,500??/strong><span>?덉궛??68% ?ъ슜</span></article>
+          <article class="metric blue"><small>?⑥? 湲덉븸</small><strong>2,359,500??/strong><span>?異?紐⑺몴源뚯? 640,500??/span></article>
+          <article class="metric gold"><small>怨듬룞 吏異?鍮꾩쑉</small><strong>72%</strong><span>媛쒖씤 吏異?28%</span></article>
+        </section>
+
+        <section class="grid-2">
+          <div class="panel">
+            <div class="panel-head"><h2>?붾퀎 ?섏엯/吏異?異붿씠</h2><button class="btn">?곸꽭 蹂닿린</button></div>
+            <div class="panel-body">
+              <div class="chart" aria-label="?붾퀎 ?섏엯怨?吏異?異붿씠 洹몃옒??>
+                <div class="bar-col"><span class="row"><i style="height: 72%; background: var(--income);"></i><i style="height: 48%; background: var(--expense);"></i></span><span>1??/span></div>
+                <div class="bar-col"><span class="row"><i style="height: 68%; background: var(--income);"></i><i style="height: 52%; background: var(--expense);"></i></span><span>2??/span></div>
+                <div class="bar-col"><span class="row"><i style="height: 74%; background: var(--income);"></i><i style="height: 56%; background: var(--expense);"></i></span><span>3??/span></div>
+                <div class="bar-col"><span class="row"><i style="height: 70%; background: var(--income);"></i><i style="height: 61%; background: var(--expense);"></i></span><span>4??/span></div>
+                <div class="bar-col"><span class="row"><i style="height: 78%; background: var(--income);"></i><i style="height: 49%; background: var(--expense);"></i></span><span>5??/span></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-head"><h2>?붽툒 遺꾨같 ?먮쫫</h2></div>
+            <div class="panel-body flow">
+              <div class="flow-step"><strong>1. ?붽툒 ?듭옣</strong><span class="muted">遺遺 ?붽툒??怨듭슜 ?듭옣???⑹궛 愿由?/span></div>
+              <div class="flow-step"><strong>2. 怨좎젙鍮?遺꾨같</strong><span class="muted">二쇨굅, ?⑸룉, ?곴툑, 援먰넻, ?듭떊, ?앺솢鍮꾨줈 諛곗젙</span></div>
+              <div class="flow-step"><strong>3. ?앺솢鍮??뺤궛</strong><span class="muted">媛쒖씤移대뱶 ?좉껐?????뺤궛 硫붾돱?먯꽌 怨꾩궛</span></div>
+            </div>
+          </div>
+        </section>
+
+        <section class="grid-2">
+          <div class="panel desktop-wide">
+            <div class="panel-head"><h2>理쒓렐 嫄곕옒</h2><button class="btn">?꾩껜 蹂닿린</button></div>
+            <table>
+              <thead><tr><th>?좎쭨</th><th>援щ텇</th><th>?댁슜</th><th>?묒꽦??/th><th class="amount">湲덉븸</th></tr></thead>
+              <tbody>
+                <tr><td>05.10</td><td><span class="tag">?앸퉬</span></td><td>二쇰쭚 ?λ낫湲?/td><td>源?쒖셿</td><td class="amount expense">-86,400??/td></tr>
+                <tr><td>05.09</td><td><span class="tag">二쇨굅</span></td><td>愿由щ퉬 ?먮룞?댁껜</td><td>怨듬룞</td><td class="amount expense">-214,000??/td></tr>
+                <tr><td>05.08</td><td><span class="tag">?섏엯</span></td><td>湲됱뿬 ?낃툑</td><td>諛곗슦??/td><td class="amount income">+3,100,000??/td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="panel">
+            <div class="panel-head"><h2>?덉궛 寃쎄퀬</h2></div>
+            <div class="panel-body">
+              <div class="budget-item">
+                <div class="between"><strong>?앸퉬</strong><span>744,000 / 1,000,000??/span></div>
+                <div class="bar"><span class="w74"></span></div>
+              </div>
+              <div class="budget-item">
+                <div class="between"><strong>?섎즺</strong><span>258,000 / 300,000??/span></div>
+                <div class="bar"><span class="w86"></span></div>
+              </div>
+            </div>
+          </div>
+        </section>
+      </section>
+
+      <section class="page" id="transactions">
+        <header class="page-head">
+          <div>
+            <h1>嫄곕옒 ?댁뿭</h1>
+            <p class="desc">遺遺媛 ?낅젰??紐⑤뱺 ?섏엯怨?吏異쒖쓣 寃?? ?꾪꽣留? ?섏젙?섎뒗 ?붾㈃?낅땲??</p>
+          </div>
+          <div class="actions"><button class="btn">?꾪꽣 ???/button><button class="btn primary">??嫄곕옒</button></div>
+        </header>
+
+        <section class="panel">
+          <div class="panel-head"><h2>鍮좊Ⅸ ?낅젰</h2></div>
+          <div class="panel-body form-grid">
+            <input type="date" value="2026-05-10" aria-label="?좎쭨">
+            <select aria-label="?좏삎"><option>吏異?/option><option>?섏엯</option></select>
+            <select aria-label="移댄뀒怨좊━"><option>?앸퉬</option><option>二쇨굅</option><option>援먰넻</option><option>?섎즺</option></select>
+            <select aria-label="吏異?二쇱껜"><option>怨듬룞</option><option>源?쒖셿</option><option>諛곗슦??/option></select>
+            <input class="wide" type="text" placeholder="硫붾え">
+            <button class="btn primary">異붽?</button>
+          </div>
+        </section>
+
+        <section class="panel toolbar">
+          <div class="row">
+            <label>湲곌컙</label><input type="date" value="2026-05-01"><input type="date" value="2026-05-31">
+            <label>移댄뀒怨좊━</label><select><option>?꾩껜</option><option>?앸퉬</option><option>二쇨굅</option></select>
+          </div>
+          <div class="row"><label>寃??/label><input type="search" placeholder="?댁슜 ?먮뒗 ?묒꽦??></div>
+        </section>
+
+        <section class="panel desktop-wide">
+          <div class="panel-head"><h2>嫄곕옒 128嫄?/h2><button class="btn">?좏깮 ??젣</button></div>
+          <table>
+            <thead><tr><th>?좎쭨</th><th>?좏삎</th><th>移댄뀒怨좊━</th><th>?댁슜</th><th>二쇱껜</th><th>?묒꽦??/th><th class="amount">湲덉븸</th><th>?곹깭</th></tr></thead>
+            <tbody>
+              <tr><td>05.10</td><td>吏異?/td><td><span class="tag">?앸퉬</span></td><td>二쇰쭚 ?λ낫湲?/td><td>怨듬룞</td><td>源?쒖셿</td><td class="amount expense">-86,400??/td><td>?뺤젙</td></tr>
+              <tr><td>05.09</td><td>吏異?/td><td><span class="tag">二쇨굅</span></td><td>愿由щ퉬 ?먮룞?댁껜</td><td>怨듬룞</td><td>諛곗슦??/td><td class="amount expense">-214,000??/td><td>?뺤젙</td></tr>
+              <tr><td>05.08</td><td>?섏엯</td><td><span class="tag">湲됱뿬</span></td><td>湲됱뿬 ?낃툑</td><td>諛곗슦??/td><td>諛곗슦??/td><td class="amount income">+3,100,000??/td><td>?뺤젙</td></tr>
+              <tr><td>05.07</td><td>吏異?/td><td><span class="tag">?섎즺</span></td><td>移섍낵 吏꾨즺</td><td>源?쒖셿</td><td>源?쒖셿</td><td class="amount expense">-72,000??/td><td>寃??/td></tr>
+            </tbody>
+          </table>
+        </section>
+      </section>
+
+      <section class="page" id="budgets">
+        <header class="page-head">
+          <div>
+            <h1>?덉궛 愿由?/h1>
+            <p class="desc">?붾퀎 移댄뀒怨좊━ ?덉궛???뺥븯怨?珥덇낵 ?꾪뿕???뺤씤?섎뒗 ?붾㈃?낅땲??</p>
+          </div>
+          <div class="actions"><button class="btn">吏?쒕떖 蹂듭궗</button><button class="btn primary">?덉궛 異붽?</button></div>
+        </header>
+
+        <section class="metrics">
+          <article class="metric blue"><small>珥??덉궛</small><strong>5,650,000??/strong><span>怨듬룞 4,000,000??쨌 媛쒖씤 1,650,000??/span></article>
+          <article class="metric red"><small>?ъ슜??/small><strong>3,840,500??/strong><span>?꾩껜 ?덉궛??68%</span></article>
+          <article class="metric green"><small>?⑥? ?덉궛</small><strong>1,809,500??/strong><span>?붾쭚 ?덉긽 420,000???ъ쑀</span></article>
+          <article class="metric gold"><small>二쇱쓽 ??ぉ</small><strong>2媛?/strong><span>?앸퉬, ?섎즺</span></article>
+        </section>
+
+        <section class="grid-3">
+          <article class="split-card">
+            <div class="between"><h3>?앸퉬</h3><strong>74%</strong></div>
+            <div class="bar"><span class="w74"></span></div>
+            <p class="muted">744,000 / 1,000,000??/p>
+            <button class="btn">?섏젙</button>
+          </article>
+          <article class="split-card">
+            <div class="between"><h3>二쇨굅</h3><strong>48%</strong></div>
+            <div class="bar"><span class="w48"></span></div>
+            <p class="muted">480,000 / 1,000,000??/p>
+            <button class="btn">?섏젙</button>
+          </article>
+          <article class="split-card">
+            <div class="between"><h3>?섎즺</h3><strong>86%</strong></div>
+            <div class="bar"><span class="w86"></span></div>
+            <p class="muted">258,000 / 300,000??/p>
+            <button class="btn">?섏젙</button>
+          </article>
+        </section>
+
+        <section class="panel desktop-wide">
+          <div class="panel-head"><h2>?덉궛 ?곸꽭</h2><button class="btn">?뺣젹 蹂寃?/button></div>
+          <table>
+            <thead><tr><th>移댄뀒怨좊━</th><th>???/th><th>?덉궛</th><th>?ъ슜??/th><th>?⑥? 湲덉븸</th><th>?뚮┝</th></tr></thead>
+            <tbody>
+              <tr><td>?앸퉬</td><td>怨듬룞</td><td>1,000,000??/td><td>744,000??/td><td>256,000??/td><td>80% ?꾨떖 ??/td></tr>
+              <tr><td>二쇨굅</td><td>怨듬룞</td><td>1,000,000??/td><td>480,000??/td><td>520,000??/td><td>90% ?꾨떖 ??/td></tr>
+              <tr><td>媛쒖씤 ?⑸룉</td><td>媛곸옄</td><td>800,000??/td><td>390,000??/td><td>410,000??/td><td>?놁쓬</td></tr>
+            </tbody>
+          </table>
+        </section>
+      </section>
+
+      <section class="page" id="settlement">
+        <header class="page-head">
+          <div>
+            <h1>?뺤궛</h1>
+            <p class="desc">?앺솢鍮꾨? 媛쒖씤移대뱶濡?癒쇱? 寃곗젣???? ?붾쭚??怨듬룞 湲곗??쇰줈 ?뺤궛?섎뒗 ?붾㈃?낅땲??</p>
+          </div>
+          <div class="actions"><button class="btn">?뺤궛 洹쒖튃</button><button class="btn primary">?대쾲 ???뺤궛 ?뺤젙</button></div>
+        </header>
+
+        <section class="grid-3">
+          <article class="metric blue"><small>?앺솢鍮??좉껐???⑷퀎</small><strong>2,764,000??/strong><span>媛곸옄 遺?댁븸 1,382,000??/span></article>
+          <article class="metric green"><small>源?쒖셿 移대뱶 寃곗젣</small><strong>1,642,000??/strong><span>湲곗?蹂대떎 260,000??珥덇낵 遺??/span></article>
+          <article class="metric red"><small>諛곗슦??移대뱶 寃곗젣</small><strong>1,122,000??/strong><span>源?쒖셿?먭쾶 260,000???댁껜</span></article>
+        </section>
+
+        <section class="grid-2">
+          <div class="panel">
+            <div class="panel-head"><h2>?뺤궛 寃곌낵</h2><button class="btn">移댁뭅?ㅽ럹??硫붾え 蹂듭궗</button></div>
+            <div class="panel-body">
+              <div class="settlement-item">
+                <div class="between"><strong>諛곗슦????源?쒖셿</strong><strong>260,000??/strong></div>
+                <p class="muted">怨듬룞 吏異?5?붾텇 50:50 ?뺤궛 湲곗?</p>
+              </div>
+              <div class="settlement-item">
+                <div class="between"><strong>?뺤궛 ?곹깭</strong><span class="tag">?湲?/span></div>
+                <p class="muted">?뺤젙 ???꾨즺 泥섎━?섎㈃ ?ㅼ쓬 ?щ줈 ?댁썡?섏? ?딆뒿?덈떎.</p>
+              </div>
+            </div>
+          </div>
+          <div class="panel desktop-wide">
+            <div class="panel-head"><h2>?뺤궛 ???嫄곕옒</h2></div>
+            <table>
+              <thead><tr><th>?좎쭨</th><th>?댁슜</th><th>寃곗젣??/th><th class="amount">湲덉븸</th></tr></thead>
+              <tbody>
+                <tr><td>05.10</td><td>二쇰쭚 ?λ낫湲?/td><td>源?쒖셿</td><td class="amount expense">86,400??/td></tr>
+                <tr><td>05.09</td><td>愿由щ퉬</td><td>諛곗슦??/td><td class="amount expense">214,000??/td></tr>
+                <tr><td>05.03</td><td>?명꽣???붽툑</td><td>源?쒖셿</td><td class="amount expense">38,500??/td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </section>
+
+      <section class="page" id="deposits">
+        <header class="page-head">
+          <div>
+            <h1>?덉쟻湲?/h1>
+            <p class="desc">?덇툑怨??곴툑??媛?낆씪, 留뚭린?? ?댁쑉, ???⑹엯?? 留뚭린 ?덉긽?≪쓣 愿由ы븯???붾㈃?낅땲??</p>
+          </div>
+          <div class="actions"><button class="btn">留뚭린???뺣젹</button><button class="btn primary">?덉쟻湲?異붽?</button></div>
+        </header>
+
+        <section class="metrics">
+          <article class="metric green"><small>?덉쟻湲?珥앹븸</small><strong>42,800,000??/strong><span>?대쾲 ???⑹엯 1,200,000??/span></article>
+          <article class="metric blue"><small>?됯퇏 ?댁쑉</small><strong>3.65%</strong><span>?몄쟾 湲곗?</span></article>
+          <article class="metric gold"><small>媛??媛源뚯슫 留뚭린</small><strong>2026.08.20</strong><span>泥?뀈?щ쭩 ?곴툑</span></article>
+          <article class="metric red"><small>?대쾲 ???⑹엯 ?덉젙</small><strong>3嫄?/strong><span>珥?1,200,000??/span></article>
+        </section>
+
+        <section class="panel desktop-wide">
+          <div class="panel-head"><h2>?덉쟻湲?紐⑸줉</h2><button class="btn">CSV ?대낫?닿린</button></div>
+          <table>
+            <thead><tr><th>?곹뭹紐?/th><th>?좏삎</th><th>媛?낆씪</th><th>留뚭린??/th><th>?댁쑉</th><th>?꾩옱 湲덉븸</th><th>???⑹엯</th><th>?곹깭</th></tr></thead>
+            <tbody>
+              <tr><td>二쇳깮 以鍮??곴툑</td><td>?곴툑</td><td>2025.09.01</td><td>2027.09.01</td><td>4.10%</td><td>18,000,000??/td><td>1,000,000??/td><td><span class="tag">?⑹엯以?/span></td></tr>
+              <tr><td>鍮꾩긽湲??덇툑</td><td>?덇툑</td><td>2026.02.15</td><td>2027.02.15</td><td>3.30%</td><td>15,000,000??/td><td>-</td><td><span class="tag">?좎?</span></td></tr>
+              <tr><td>?ы뻾 ?곴툑</td><td>?곴툑</td><td>2026.01.20</td><td>2026.08.20</td><td>3.55%</td><td>9,800,000??/td><td>200,000??/td><td><span class="tag">留뚭린 ?꾨컯</span></td></tr>
+            </tbody>
+          </table>
+        </section>
+      </section>
+
+      <section class="page" id="housing">
+        <header class="page-head">
+          <div>
+            <h1>二쇳깮 ?먭툑</h1>
+            <p class="desc">?꾩옱 ?꾩꽭湲덉쓣 二쇳깮 ?먭툑怨??異쒓툑?쇰줈 ?섎늻???뺤씤?섎뒗 ?붾㈃?낅땲??</p>
+          </div>
+          <div class="actions"><button class="btn">?異?議곌굔 ?섏젙</button><button class="btn primary">蹂???댁뿭 異붽?</button></div>
+        </header>
+
+        <section class="metrics">
+          <article class="metric blue"><small>?꾩옱 ?꾩꽭湲?/small><strong>350,000,000??/strong><span>怨꾩빟 留뚭린 2027.11.30</span></article>
+          <article class="metric green"><small>蹂댁쑀 二쇳깮 ?먭툑</small><strong>170,000,000??/strong><span>?덉쟻湲??ы븿 ?먭린?먮낯</span></article>
+          <article class="metric red"><small>?꾩꽭 ?異쒓툑</small><strong>180,000,000??/strong><span>??3.82% 蹂?숆툑由?/span></article>
+          <article class="metric gold"><small>???異쒖씠??/small><strong>573,000??/strong><span>怨좎젙鍮?二쇨굅 ??ぉ 諛섏쁺</span></article>
+        </section>
+
+        <section class="grid-2">
+          <div class="panel">
+            <div class="panel-head"><h2>?꾩꽭湲?援ъ꽦</h2></div>
+            <div class="panel-body">
+              <div class="budget-item">
+                <div class="between"><strong>二쇳깮 ?먭툑</strong><span>170,000,000??/span></div>
+                <div class="bar"><span class="w48"></span></div>
+              </div>
+              <div class="budget-item">
+                <div class="between"><strong>?異쒓툑</strong><span>180,000,000??/span></div>
+                <div class="bar"><span class="w61"></span></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel desktop-wide">
+            <div class="panel-head"><h2>二쇨굅 怨좎젙鍮?/h2></div>
+            <table>
+              <thead><tr><th>??ぉ</th><th>??湲덉븸</th><th>?⑸???/th><th>鍮꾧퀬</th></tr></thead>
+              <tbody>
+                <tr><td>?異쒖씠??/td><td>573,000??/td><td>留ㅼ썡 25??/td><td>二쇨굅 怨좎젙鍮?/td></tr>
+                <tr><td>愿由щ퉬</td><td>214,000??/td><td>留ㅼ썡 10??/td><td>?먮룞?댁껜</td></tr>
+                <tr><td>媛?ㅻ퉬</td><td>68,000??/td><td>留ㅼ썡 20??/td><td>怨꾩젅 蹂??/td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </section>
+
+      <section class="page" id="assets">
+        <header class="page-head">
+          <div>
+            <h1>?꾩껜 ?먯궛</h1>
+            <p class="desc">怨듯넻 ?듭옣 ?⑥? ?덉궛, ?덉쟻湲? 二쇳깮 ?먭툑???⑹궛???꾩껜 ?먯궛 ?먮쫫??蹂대뒗 ?붾㈃?낅땲??</p>
+          </div>
+          <div class="actions"><button class="btn">?붾퀎 鍮꾧탳</button><button class="btn primary">?먯궛 ?낅뜲?댄듃</button></div>
+        </header>
+
+        <section class="metrics">
+          <article class="metric green"><small>?꾩껜 ?먯궛</small><strong>236,159,500??/strong><span>?꾩썡 ?鍮?+3,240,000??/span></article>
+          <article class="metric blue"><small>怨듯넻 ?듭옣 ?⑥? ?덉궛</small><strong>2,359,500??/strong><span>?대쾲 ??媛???먭툑</span></article>
+          <article class="metric gold"><small>?덉쟻湲?/small><strong>42,800,000??/strong><span>?덇툑 15,000,000??쨌 ?곴툑 27,800,000??/span></article>
+          <article class="metric red"><small>二쇳깮 ?쒖옄??/small><strong>191,000,000??/strong><span>?꾩꽭湲?350,000,000??- ?異?159,000,000??/span></article>
+        </section>
+
+        <section class="grid-2">
+          <div class="panel">
+            <div class="panel-head"><h2>?꾩껜 ?먯궛 ?먮쫫</h2><button class="btn">湲곌컙 蹂寃?/button></div>
+            <div class="panel-body">
+              <div class="asset-line" aria-label="?꾩껜 ?먯궛 ?먮쫫 洹몃옒??>
+                <svg viewBox="0 0 800 240" role="img" aria-label="1?붾???5?붽퉴吏 ?꾩껜 ?먯궛 ?곸듅 異붿씠">
+                  <polyline points="40,178 210,162 380,132 560,106 760,72" fill="none" stroke="#315da8" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"></polyline>
+                  <polyline points="40,204 210,190 380,170 560,148 760,126" fill="none" stroke="#13795b" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"></polyline>
+                  <text x="42" y="226" fill="#66717d" font-size="20">1??/text>
+                  <text x="210" y="226" fill="#66717d" font-size="20">2??/text>
+                  <text x="380" y="226" fill="#66717d" font-size="20">3??/text>
+                  <text x="560" y="226" fill="#66717d" font-size="20">4??/text>
+                  <text x="730" y="226" fill="#66717d" font-size="20">5??/text>
+                </svg>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-head"><h2>?먯궛 援ъ꽦</h2></div>
+            <div class="panel-body flow">
+              <div class="flow-step"><strong>怨듯넻 ?듭옣 ?⑥? ?덉궛</strong><span class="muted">2,359,500??쨌 ?붽툒 遺꾨같 ???붿뿬</span></div>
+              <div class="flow-step"><strong>?덉쟻湲?/strong><span class="muted">42,800,000??쨌 ?덇툑, ?곴툑 ?⑹궛</span></div>
+              <div class="flow-step"><strong>二쇳깮 ?먭툑</strong><span class="muted">191,000,000??쨌 ?꾩꽭湲덉뿉???異쒓툑???쒖쇅??湲덉븸</span></div>
+            </div>
+          </div>
+        </section>
+      </section>
+
+      <section class="page" id="settings">
+        <header class="page-head">
+          <div>
+            <h1>?ㅼ젙</h1>
+            <p class="desc">媛援?援ъ꽦?? 沅뚰븳, 移댄뀒怨좊━, ?뚮┝, ?곗씠???대낫?닿린瑜?愿由ы븯???붾㈃?낅땲??</p>
+          </div>
+          <div class="actions"><button class="btn">蹂寃?痍⑥냼</button><button class="btn primary">???/button></div>
+        </header>
+
+        <section class="grid-2">
+          <div class="panel">
+            <div class="panel-head"><h2>援ъ꽦??沅뚰븳</h2><button class="btn">珥덈?</button></div>
+            <div class="panel-body">
+              <div class="setting-item">
+                <div class="between"><strong>源?쒖셿</strong><span class="tag">愿由ъ옄</span></div>
+                <p class="muted">紐⑤뱺 嫄곕옒, ?덉궛, ?뺤궛, 援ъ꽦???ㅼ젙 媛??/p>
+              </div>
+              <div class="setting-item">
+                <div class="between"><strong>諛곗슦??/strong><span class="tag">?몄쭛 媛??/span></div>
+                <p class="muted">嫄곕옒? ?덉궛 ?몄쭛 媛?? 援ъ꽦????젣 遺덇?</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-head"><h2>湲곕낯 洹쒖튃</h2></div>
+            <div class="panel-body">
+              <div class="setting-item">
+                <label for="currency">?듯솕</label>
+                <select id="currency"><option>KRW ?먰솕</option></select>
+              </div>
+              <div class="setting-item">
+                <label for="settle-rule">怨듬룞 吏異??뺤궛 諛⑹떇</label>
+                <select id="settle-rule"><option>50:50</option><option>?섏엯 鍮꾩쑉 湲곗?</option><option>吏곸젒 吏??/option></select>
+              </div>
+              <div class="setting-item">
+                <label for="month-start">???쒖옉??/label>
+                <select id="month-start"><option>留ㅼ썡 1??/option><option>湲됱뿬??湲곗?</option></select>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-head"><h2>移댄뀒怨좊━</h2><button class="btn">移댄뀒怨좊━ 異붽?</button></div>
+          <div class="panel-body grid-3">
+            <div class="split-card"><h3>怨듬룞 吏異?/h3><p class="muted">?앸퉬, 二쇨굅, 援먰넻, ?섎즺, 媛議?/p></div>
+            <div class="split-card"><h3>媛쒖씤 吏異?/h3><p class="muted">?⑸룉, 痍⑤?, 媛쒖씤 ?쇳븨</p></div>
+            <div class="split-card"><h3>?섏엯</h3><p class="muted">湲됱뿬, 遺?섏엯, ?댁옄, 湲고?</p></div>
+          </div>
+        </section>
+      </section>
+    </main>
+  </div>
+</body>
+</html>
+
