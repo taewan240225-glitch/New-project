@@ -1,3 +1,5 @@
+import "./currency-inputs.js";
+
 // Firebase를 사용해 모바일/PC 실시간 동기화를 켜려면 이 파일의 값을 채우세요.
 // 설정 전에는 앱이 localStorage 기반 로컬 모드로 동작합니다.
 export const firebaseConfig = {
