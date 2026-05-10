@@ -35,11 +35,6 @@
         <button data-view="assets">전체 자산</button>
         <button data-view="settings">설정</button>
       </nav>
-      <section class="sync-panel">
-        <strong id="syncTitle">로컬 모드</strong>
-        <span id="syncDescription">Firebase 설정 전까지 이 기기에만 저장됩니다.</span>
-        <button id="logoutButton" class="btn sync-logout hidden">로그아웃</button>
-      </section>
     </aside>
 
     <main>
@@ -50,7 +45,6 @@
         </div>
         <div class="top-actions">
           <select id="monthSelect" aria-label="월 선택"></select>
-          <button id="resetButton" class="btn">전체 초기화</button>
         </div>
       </header>
 
@@ -257,6 +251,19 @@
             <p class="muted">같은 부부 계정/가구 ID를 쓰는 구조로 확장할 수 있도록 데이터는 하나의 household 문서 기준으로 저장됩니다.</p>
           </div>
         </section>
+      </section>
+
+      <section class="system-panel" aria-label="앱 관리">
+        <div class="sync-panel">
+          <strong id="syncTitle">로컬 모드</strong>
+          <span id="syncDescription">Firebase 설정 전까지 이 기기에만 저장됩니다.</span>
+          <span id="backupInfo" class="muted">백업 없음</span>
+        </div>
+        <div class="system-actions">
+          <button id="restoreBackupButton" class="btn" disabled>최근 백업 복원</button>
+          <button id="resetButton" class="btn danger">전체 초기화</button>
+          <button id="logoutButton" class="btn sync-logout hidden">로그아웃</button>
+        </div>
       </section>
     </main>
   </div>

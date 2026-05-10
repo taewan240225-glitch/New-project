@@ -9,6 +9,7 @@ const emptyState = {
   distributions: [],
   deposits: [],
   housingRepayments: [],
+  backups: [],
   housing: { jeonse: 0, ownFund: 0, loan: 0, interest: 0 }
 };
 
@@ -40,6 +41,7 @@ function normalizeState() {
   state.distributions ||= [];
   state.deposits ||= [];
   state.housingRepayments ||= [];
+  state.backups ||= [];
   state.housing ||= { jeonse: 0, ownFund: 0, loan: 0, interest: 0 };
   state.transactions.forEach((item) => {
     if (item.payer === "배우자") item.payer = "정윤희";
@@ -337,6 +339,19 @@ function renderHousing() {
     `).join("");
 }
 
+function renderBackupInfo() {
+  const backup = latestBackup();
+  const restoreButton = $("#restoreBackupButton");
+  if (!backup) {
+    $("#backupInfo").textContent = "백업 없음";
+    restoreButton.disabled = true;
+    return;
+  }
+  const createdAt = new Date(backup.createdAt).toLocaleString("ko-KR");
+  $("#backupInfo").textContent = `최근 백업: ${createdAt} · ${backup.reason}`;
+  restoreButton.disabled = false;
+}
+
 function renderAssetChart() {
   const months = recentMonthsWithData(12);
   if (months.length === 0) {
@@ -371,6 +386,7 @@ function render() {
   renderDeposits();
   renderHousing();
   renderAssetChart();
+  renderBackupInfo();
 }
 
 function setView(view) {
@@ -383,6 +399,29 @@ function setView(view) {
 
 function formData(form) {
   return Object.fromEntries(new FormData(form).entries());
+}
+
+function stateWithoutBackups(source = state) {
+  const snapshot = structuredClone(source);
+  delete snapshot.backups;
+  return snapshot;
+}
+
+function makeBackup(reason) {
+  return {
+    id: crypto.randomUUID(),
+    createdAt: new Date().toISOString(),
+    reason,
+    data: stateWithoutBackups()
+  };
+}
+
+function withNewBackup(reason) {
+  return [makeBackup(reason), ...(state.backups || [])].slice(0, 5);
+}
+
+function latestBackup() {
+  return state.backups?.[0] || null;
 }
 
 function fillForm(form, values) {
@@ -430,10 +469,25 @@ function bindEvents() {
   $("#monthSelect").addEventListener("change", render);
   $("#transactionSearch").addEventListener("input", renderTransactions);
   $("#resetButton").addEventListener("click", async () => {
-    const confirmed = confirm("모든 가계부 데이터를 삭제하고 빈 상태로 초기화할까요?");
+    const confirmed = confirm("현재 데이터를 백업한 뒤 모든 가계부 데이터를 빈 상태로 초기화할까요?");
     if (!confirmed) return;
+    const backups = withNewBackup("전체 초기화 전 백업");
     state = structuredClone(emptyState);
-    localStorage.removeItem(localKey);
+    state.backups = backups;
+    normalizeState();
+    await persist();
+  });
+  $("#restoreBackupButton").addEventListener("click", async () => {
+    const backup = latestBackup();
+    if (!backup) return;
+    const createdAt = new Date(backup.createdAt).toLocaleString("ko-KR");
+    const confirmed = confirm(`${createdAt} 백업으로 복원할까요? 현재 데이터도 복원 전 백업으로 저장됩니다.`);
+    if (!confirmed) return;
+    const restorePoint = makeBackup("백업 복원 전 백업");
+    const previousBackups = state.backups || [];
+    state = structuredClone(backup.data);
+    state.backups = [restorePoint, ...previousBackups].slice(0, 5);
+    normalizeState();
     await persist();
   });
   $("#loginButton").addEventListener("click", async () => {
