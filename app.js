@@ -2,10 +2,12 @@ import { allowedEmails, firebaseConfig } from "./firebase-config.js";
 
 const householdId = "default-household";
 const localKey = "couple-budget-state-v1";
+const defaultAllocationCategories = ["주거", "용돈", "적금", "교통", "통신", "생활비"];
 
 const emptyState = {
   transactions: [],
   allocations: [],
+  allocationCategories: [...defaultAllocationCategories],
   distributions: [],
   deposits: [],
   housingRepayments: [],
@@ -31,6 +33,13 @@ const titles = {
 
 const $ = (selector) => document.querySelector(selector);
 const $$ = (selector) => [...document.querySelectorAll(selector)];
+const escapeHtml = (value) => String(value ?? "").replace(/[&<>"']/g, (char) => ({
+  "&": "&amp;",
+  "<": "&lt;",
+  ">": "&gt;",
+  "\"": "&quot;",
+  "'": "&#39;"
+})[char]);
 const won = (value) => `${Math.round(value || 0).toLocaleString("ko-KR")}원`;
 const monthOf = (date) => date.slice(0, 7);
 const currentSystemMonth = () => new Date().toISOString().slice(0, 7);
@@ -38,6 +47,13 @@ const currentSystemMonth = () => new Date().toISOString().slice(0, 7);
 function normalizeState() {
   state.transactions ||= [];
   state.allocations ||= [];
+  const storedAllocationCategories = Array.isArray(state.allocationCategories) ? state.allocationCategories : null;
+  state.allocationCategories = [
+    ...new Set((storedAllocationCategories ?? [
+      ...defaultAllocationCategories,
+      ...state.allocations.map((item) => item.category)
+    ]).filter(Boolean))
+  ];
   state.distributions ||= [];
   state.deposits ||= [];
   state.housingRepayments ||= [];
@@ -153,6 +169,29 @@ function recentTransactions(limit = 12) {
   return state.transactions.filter((item) => months.has(monthOf(item.date)));
 }
 
+function depositActiveInMonth(deposit, month) {
+  const startMonth = deposit.startDate ? monthOf(deposit.startDate) : "";
+  const maturityMonth = deposit.maturityDate ? monthOf(deposit.maturityDate) : "";
+  return (!startMonth || startMonth <= month) && (!maturityMonth || month <= maturityMonth);
+}
+
+function savingsForMonth(month) {
+  return state.deposits
+    .filter((item) => depositActiveInMonth(item, month))
+    .reduce((total, item) => total + Number(item.amount || 0), 0);
+}
+
+function recentDashboardMonths(limit = 12) {
+  const range = monthRangeEndingAt(currentMonth(), limit);
+  const monthsWithData = new Set(state.transactions.map((item) => monthOf(item.date)));
+  state.deposits.forEach((item) => {
+    range.forEach((month) => {
+      if (depositActiveInMonth(item, month)) monthsWithData.add(month);
+    });
+  });
+  return range.filter((month) => monthsWithData.has(month));
+}
+
 function sum(items, predicate) {
   return items.filter(predicate).reduce((total, item) => total + Number(item.amount || 0), 0);
 }
@@ -199,23 +238,53 @@ function renderMetrics() {
 }
 
 function renderMonthlyChart() {
-  const months = [...new Set(state.transactions.map((item) => monthOf(item.date)))].sort().slice(-6);
+  const months = recentDashboardMonths(12);
+  if (months.length === 0) {
+    $("#monthlyChart").innerHTML = `<p class="muted">표시할 월별 수입, 지출, 저축 데이터가 없습니다.</p>`;
+    return;
+  }
   const rows = months.map((month) => {
     const tx = state.transactions.filter((item) => monthOf(item.date) === month);
     return {
       month,
       income: sum(tx, (item) => item.type === "income"),
-      expense: sum(tx, (item) => item.type === "expense")
+      expense: sum(tx, (item) => item.type === "expense"),
+      saving: savingsForMonth(month)
     };
   });
-  const max = Math.max(1, ...rows.flatMap((row) => [row.income, row.expense]));
+  const max = Math.max(1, ...rows.flatMap((row) => [row.income, row.expense, row.saving]));
   $("#monthlyChart").innerHTML = rows.map((row) => `
     <div class="month-bars">
       <div class="bar-pair">
         <span class="bar income-bar" title="수입 ${won(row.income)}" style="height:${Math.max(4, row.income / max * 190)}px"></span>
         <span class="bar expense-bar" title="지출 ${won(row.expense)}" style="height:${Math.max(4, row.expense / max * 190)}px"></span>
+        <span class="bar saving-bar" title="저축 ${won(row.saving)}" style="height:${Math.max(4, row.saving / max * 190)}px"></span>
       </div>
       <span>${Number(row.month.slice(5))}월</span>
+    </div>
+  `).join("");
+}
+
+function renderAllocationCategoryControls() {
+  const select = $("#allocationCategorySelect");
+  if (select) {
+    const previous = select.value;
+    select.innerHTML = state.allocationCategories
+      .map((category) => `<option value="${escapeHtml(category)}">${escapeHtml(category)}</option>`)
+      .join("");
+    select.value = previous && state.allocationCategories.includes(previous)
+      ? previous
+      : state.allocationCategories[0] || "";
+  }
+
+  const list = $("#allocationCategoryList");
+  if (!list) return;
+  list.innerHTML = state.allocationCategories.map((category) => `
+    <div class="item">
+      <div class="item-row">
+        <strong>${escapeHtml(category)}</strong>
+        <button class="delete-btn" data-delete-allocation-category="${escapeHtml(category)}">삭제</button>
+      </div>
     </div>
   `).join("");
 }
@@ -380,6 +449,7 @@ function render() {
   renderMonthSelect();
   renderMetrics();
   renderMonthlyChart();
+  renderAllocationCategoryControls();
   renderLists();
   renderTransactions();
   renderSettlement();
@@ -468,6 +538,19 @@ function bindEvents() {
   $$(".nav button").forEach((button) => button.addEventListener("click", () => setView(button.dataset.view)));
   $("#monthSelect").addEventListener("change", render);
   $("#transactionSearch").addEventListener("input", renderTransactions);
+  $("#allocationCategoryForm").addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const data = formData(event.currentTarget);
+    const category = data.category.trim();
+    if (!category) return;
+    if (state.allocationCategories.includes(category)) {
+      event.currentTarget.reset();
+      return;
+    }
+    state.allocationCategories.push(category);
+    event.currentTarget.reset();
+    await persist();
+  });
   $("#resetButton").addEventListener("click", async () => {
     const confirmed = confirm("현재 데이터를 백업한 뒤 모든 가계부 데이터를 빈 상태로 초기화할까요?");
     if (!confirmed) return;
@@ -650,6 +733,7 @@ function bindEvents() {
     const editDepositId = event.target.dataset.editDeposit;
     const editAllocationCategory = event.target.dataset.editAllocation;
     const deleteAllocationCategory = event.target.dataset.deleteAllocation;
+    const deleteAllocationCategoryOption = event.target.dataset.deleteAllocationCategory;
     const editLoanRepaymentId = event.target.dataset.editLoanRepayment;
     const deleteLoanRepaymentId = event.target.dataset.deleteLoanRepayment;
     const openDistribution = event.target.dataset.openDistribution;
@@ -709,6 +793,15 @@ function bindEvents() {
       const confirmed = confirm("이 대출금 상환 기록을 삭제할까요?");
       if (!confirmed) return;
       state.housingRepayments = state.housingRepayments.filter((item) => item.id !== deleteLoanRepaymentId);
+      await persist();
+      return;
+    }
+
+    if (deleteAllocationCategoryOption) {
+      const confirmed = confirm(`${deleteAllocationCategoryOption} 항목을 고정비 선택 목록에서 제거할까요? 이미 입력된 고정비 지출 기록은 유지됩니다.`);
+      if (!confirmed) return;
+      state.allocationCategories = state.allocationCategories.filter((item) => item !== deleteAllocationCategoryOption);
+      normalizeState();
       await persist();
       return;
     }

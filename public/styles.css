@@ -7,6 +7,7 @@
   --dark: #18212a;
   --income: #13795b;
   --expense: #bd4038;
+  --saving: #315da8;
   --blue: #315da8;
   --gold: #9a6a2f;
   --soft-green: #e8f5ef;
@@ -387,7 +388,8 @@ input, select {
 
 .income-bar { background: var(--income); }
 .expense-bar { background: var(--expense); }
-.income-dot, .expense-dot {
+.saving-bar { background: var(--saving); }
+.income-dot, .expense-dot, .saving-dot {
   width: 9px;
   height: 9px;
   border-radius: 50%;
@@ -395,6 +397,15 @@ input, select {
 }
 .income-dot { background: var(--income); }
 .expense-dot { background: var(--expense); }
+.saving-dot { background: var(--saving); }
+
+.mobile-date-field {
+  display: contents;
+}
+
+.mobile-date-field span {
+  display: none;
+}
 
 .line-chart {
   min-height: 260px;
@@ -459,6 +470,11 @@ th {
   cursor: pointer;
 }
 
+.settings-data-actions {
+  display: grid;
+  gap: 12px;
+}
+
 @media (max-width: 1100px) {
   .app-shell { grid-template-columns: 1fr; }
   .sidebar {
@@ -489,6 +505,16 @@ th {
   .form-grid,
   .form-grid.compact {
     grid-template-columns: 1fr;
+  }
+  .mobile-date-field {
+    display: grid;
+    gap: 6px;
+  }
+  .mobile-date-field span {
+    display: block;
+    color: var(--muted);
+    font-size: 13px;
+    font-weight: 750;
   }
   .btn, input, select { width: 100%; }
   .metric strong { font-size: 21px; }

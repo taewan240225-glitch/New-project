@@ -59,8 +59,8 @@
         <section class="grid-2">
           <article class="panel">
             <div class="panel-head">
-              <h2>월별 수입/지출</h2>
-              <span class="legend"><i class="income-dot"></i>수입 <i class="expense-dot"></i>지출</span>
+              <h2>월별 수입/지출/저축</h2>
+              <span class="legend"><i class="income-dot"></i>수입 <i class="expense-dot"></i>지출 <i class="saving-dot"></i>저축</span>
             </div>
             <div id="monthlyChart" class="chart"></div>
           </article>
@@ -88,7 +88,10 @@
           <div class="panel-head"><h2>거래 추가</h2></div>
           <form id="transactionForm" class="form-grid">
             <input name="id" type="hidden">
-            <input name="date" type="date" required>
+            <label class="mobile-date-field">
+              <span>날짜</span>
+              <input name="date" type="date" aria-label="날짜" required>
+            </label>
             <select name="type" required>
               <option value="income">수입</option>
               <option value="expense">지출</option>
@@ -133,7 +136,7 @@
           <div class="panel-head"><h2>고정비 지출</h2></div>
           <form id="allocationForm" class="form-grid compact">
             <input name="originalCategory" type="hidden">
-            <select name="category">
+            <select id="allocationCategorySelect" name="category">
               <option>주거</option><option>용돈</option><option>적금</option><option>교통</option><option>통신</option><option>생활비</option>
             </select>
             <input name="amount" type="number" min="0" step="1000" placeholder="월 배정액">
@@ -200,16 +203,6 @@
       </section>
 
       <section id="housingView" class="view">
-        <section class="panel">
-          <div class="panel-head"><h2>주택 자금</h2></div>
-          <form id="housingForm" class="form-grid compact">
-            <input name="jeonse" type="number" min="0" step="1000000" placeholder="현재 전세금">
-            <input name="ownFund" type="number" min="0" step="1000000" placeholder="주택 자금">
-            <input name="loan" type="number" min="0" step="1000000" placeholder="대출금">
-            <input name="interest" type="number" min="0" step="1000" placeholder="월 대출이자">
-            <button class="btn primary">저장</button>
-          </form>
-        </section>
         <section class="metrics">
           <article class="metric asset"><span>현재 전세금</span><strong id="jeonseValue">0원</strong></article>
           <article class="metric income"><span>주택 자금</span><strong id="ownFundValue">0원</strong></article>
@@ -227,6 +220,16 @@
             <button id="loanRepaymentCancel" class="btn hidden" type="button">취소</button>
           </form>
           <div id="loanRepaymentList" class="stack padded"></div>
+        </section>
+        <section class="panel">
+          <div class="panel-head"><h2>주택 자금 입력</h2></div>
+          <form id="housingForm" class="form-grid compact">
+            <input name="jeonse" type="number" min="0" step="1000000" placeholder="현재 전세금">
+            <input name="ownFund" type="number" min="0" step="1000000" placeholder="주택 자금">
+            <input name="loan" type="number" min="0" step="1000000" placeholder="대출금">
+            <input name="interest" type="number" min="0" step="1000" placeholder="월 대출이자">
+            <button class="btn primary">저장</button>
+          </form>
         </section>
       </section>
 
@@ -251,17 +254,32 @@
             <p class="muted">같은 부부 계정/가구 ID를 쓰는 구조로 확장할 수 있도록 데이터는 하나의 household 문서 기준으로 저장됩니다.</p>
           </div>
         </section>
+        <section class="panel">
+          <div class="panel-head"><h2>고정비 지출 항목</h2></div>
+          <form id="allocationCategoryForm" class="form-grid compact">
+            <input name="category" placeholder="항목명 예: 운동" required>
+            <button class="btn primary">항목 추가</button>
+          </form>
+          <div id="allocationCategoryList" class="stack padded"></div>
+        </section>
+        <section class="panel">
+          <div class="panel-head"><h2>데이터 관리</h2></div>
+          <div class="padded settings-data-actions">
+            <span id="backupInfo" class="muted">백업 없음</span>
+            <div class="system-actions">
+              <button id="restoreBackupButton" class="btn" disabled>최근 백업 복원</button>
+              <button id="resetButton" class="btn danger">전체 초기화</button>
+            </div>
+          </div>
+        </section>
       </section>
 
-      <section class="system-panel" aria-label="앱 관리">
+      <section class="system-panel" aria-label="동기화 상태">
         <div class="sync-panel">
           <strong id="syncTitle">로컬 모드</strong>
           <span id="syncDescription">Firebase 설정 전까지 이 기기에만 저장됩니다.</span>
-          <span id="backupInfo" class="muted">백업 없음</span>
         </div>
         <div class="system-actions">
-          <button id="restoreBackupButton" class="btn" disabled>최근 백업 복원</button>
-          <button id="resetButton" class="btn danger">전체 초기화</button>
           <button id="logoutButton" class="btn sync-logout hidden">로그아웃</button>
         </div>
       </section>
