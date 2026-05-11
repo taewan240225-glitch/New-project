@@ -42,6 +42,9 @@
     input.type = "text";
     input.inputMode = "numeric";
     input.autocomplete = "off";
+    input.removeAttribute("min");
+    input.removeAttribute("max");
+    input.removeAttribute("step");
     input.style.textAlign = "right";
     input.style.fontVariantNumeric = "tabular-nums";
 

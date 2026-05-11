@@ -112,7 +112,7 @@
               <option>정윤희</option>
             </select>
             <input name="memo" placeholder="내용" required>
-            <input name="amount" type="number" min="0" step="100" placeholder="금액" required>
+            <input name="amount" type="text" inputmode="numeric" placeholder="금액" required>
             <button id="transactionSubmit" class="btn primary">추가</button>
             <button id="transactionCancel" class="btn hidden" type="button">취소</button>
           </form>
@@ -139,7 +139,7 @@
             <select id="allocationCategorySelect" name="category">
               <option>주거</option><option>용돈</option><option>적금</option><option>교통</option><option>통신</option><option>생활비</option>
             </select>
-            <input name="amount" type="number" min="0" step="1000" placeholder="월 배정액">
+            <input name="amount" type="text" inputmode="numeric" placeholder="월 배정액">
             <button id="allocationSubmit" class="btn primary">저장</button>
             <button id="allocationCancel" class="btn hidden" type="button">취소</button>
           </form>
@@ -165,7 +165,7 @@
               <option>정윤희</option>
             </select>
             <input name="memo" placeholder="내용" required>
-            <input name="amount" type="number" min="0" step="100" placeholder="금액" required>
+            <input name="amount" type="text" inputmode="numeric" placeholder="금액" required>
             <button id="settlementSubmit" class="btn primary">추가</button>
             <button id="settlementCancel" class="btn hidden" type="button">취소</button>
           </form>
@@ -186,7 +186,7 @@
             <input name="startDate" type="date" required>
             <input name="maturityDate" type="date" required>
             <input name="rate" type="number" min="0" step="0.01" placeholder="이율 %" required>
-            <input name="amount" type="number" min="0" step="1000" placeholder="현재 금액" required>
+            <input name="amount" type="text" inputmode="numeric" placeholder="현재 금액" required>
             <button id="depositSubmit" class="btn primary">추가</button>
             <button id="depositCancel" class="btn hidden" type="button">취소</button>
           </form>
@@ -214,7 +214,7 @@
           <form id="loanRepaymentForm" class="form-grid compact">
             <input name="id" type="hidden">
             <input name="date" type="date" required>
-            <input name="amount" type="number" min="0" step="10000" placeholder="상환 금액" required>
+            <input name="amount" type="text" inputmode="numeric" placeholder="상환 금액" required>
             <input name="memo" placeholder="메모">
             <button id="loanRepaymentSubmit" class="btn primary">추가</button>
             <button id="loanRepaymentCancel" class="btn hidden" type="button">취소</button>
@@ -224,10 +224,10 @@
         <section class="panel">
           <div class="panel-head"><h2>주택 자금 입력</h2></div>
           <form id="housingForm" class="form-grid compact">
-            <input name="jeonse" type="number" min="0" step="1000000" placeholder="현재 전세금">
-            <input name="ownFund" type="number" min="0" step="1000000" placeholder="주택 자금">
-            <input name="loan" type="number" min="0" step="1000000" placeholder="대출금">
-            <input name="interest" type="number" min="0" step="1000" placeholder="월 대출이자">
+            <input name="jeonse" type="text" inputmode="numeric" placeholder="현재 전세금">
+            <input name="ownFund" type="text" inputmode="numeric" placeholder="주택 자금">
+            <input name="loan" type="text" inputmode="numeric" placeholder="대출금">
+            <input name="interest" type="text" inputmode="numeric" placeholder="월 대출이자">
             <button class="btn primary">저장</button>
           </form>
         </section>
