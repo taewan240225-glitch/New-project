@@ -1,0 +1,50 @@
+name: Deploy Firebase Hosting
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: firebase-hosting-live
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    name: Deploy live site
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Sync source files to public
+        run: |
+          for file in index.html styles.css app.js firebase-config.js currency-inputs.js; do
+            if [ -f "$file" ]; then
+              cp "$file" "public/$file"
+            fi
+          done
+
+      - name: Check JavaScript syntax
+        run: node --check app.js
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_UNIWANI_BUDGET_240225 }}
+
+      - name: Install Firebase CLI
+        run: npm install -g firebase-tools
+
+      - name: Deploy Firebase Hosting and Firestore rules
+        run: firebase deploy --only hosting,firestore:rules --project uniwani-budget-240225 --non-interactive
