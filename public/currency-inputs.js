@@ -5,16 +5,15 @@
     .join(",");
 
   const digitsOnly = (value) => String(value ?? "").replace(/[^0-9]/g, "");
-  const formatWonInput = (value) => {
+  const formatCommaInput = (value) => {
     const digits = digitsOnly(value);
     if (!digits) return "";
-    return `${Number(digits).toLocaleString("ko-KR")} 원`;
+    return digits.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
   };
 
-  function placeCaretBeforeSuffix(input) {
+  function placeCaretAtEnd(input) {
     if (document.activeElement !== input) return;
-    const suffixLength = input.value.endsWith(" 원") ? 2 : 0;
-    const position = Math.max(0, input.value.length - suffixLength);
+    const position = input.value.length;
     try {
       input.setSelectionRange(position, position);
     } catch {
@@ -23,8 +22,8 @@
   }
 
   function formatMoneyInput(input) {
-    input.value = formatWonInput(input.value);
-    placeCaretBeforeSuffix(input);
+    input.value = formatCommaInput(input.value);
+    placeCaretAtEnd(input);
   }
 
   function toRawNumber(input) {
@@ -48,7 +47,7 @@
     input.style.textAlign = "right";
     input.style.fontVariantNumeric = "tabular-nums";
 
-    input.addEventListener("focus", () => placeCaretBeforeSuffix(input));
+    input.addEventListener("focus", () => placeCaretAtEnd(input));
     input.addEventListener("input", () => formatMoneyInput(input));
     input.addEventListener("blur", () => formatMoneyInput(input));
     input.addEventListener("change", () => formatMoneyInput(input));
