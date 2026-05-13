@@ -96,7 +96,7 @@
               <option value="income">수입</option>
               <option value="expense">지출</option>
             </select>
-            <select name="category" required>
+            <select id="transactionCategorySelect" name="category" required>
               <option>월급</option>
               <option>주거</option>
               <option>용돈</option>
@@ -181,7 +181,12 @@
           <div class="panel-head"><h2>예적금 추가</h2></div>
           <form id="depositForm" class="form-grid">
             <input name="id" type="hidden">
-            <input name="name" placeholder="상품명" required>
+            <input name="name" placeholder="상품명 직접입력" required>
+            <select name="owner" required>
+              <option value="">가입자 선택</option>
+              <option>김태완</option>
+              <option>정윤희</option>
+            </select>
             <select name="kind"><option>예금</option><option>적금</option></select>
             <input name="startDate" type="date" required>
             <input name="maturityDate" type="date" required>
@@ -195,7 +200,7 @@
           <div class="panel-head"><h2>예적금 목록</h2></div>
           <div class="table-wrap">
             <table>
-              <thead><tr><th>상품명</th><th>유형</th><th>가입일</th><th>만기일</th><th>이율</th><th class="right">현재 금액</th><th></th></tr></thead>
+              <thead><tr><th>상품명</th><th>가입자</th><th>유형</th><th>가입일</th><th>만기일</th><th>이율</th><th class="right">현재 금액</th><th></th></tr></thead>
               <tbody id="depositTable"></tbody>
             </table>
           </div>
@@ -255,12 +260,21 @@
           </div>
         </section>
         <section class="panel">
-          <div class="panel-head"><h2>고정비 지출 항목</h2></div>
-          <form id="allocationCategoryForm" class="form-grid compact">
-            <input name="category" placeholder="항목명 예: 운동" required>
-            <button class="btn primary">항목 추가</button>
+          <div class="panel-head"><h2>항목 수정</h2></div>
+          <div class="padded stack">
+            <label class="settings-scope">
+              <span class="muted">수정 메뉴</span>
+              <select id="categoryScope" aria-label="수정 메뉴">
+                <option value="transactions">거래 내역</option>
+                <option value="allocations">고정비 지출</option>
+              </select>
+            </label>
+          </div>
+          <form id="categoryForm" class="form-grid compact">
+            <input name="category" placeholder="신규 항목명 예: 운동" required>
+            <button class="btn primary">신규 추가</button>
           </form>
-          <div id="allocationCategoryList" class="stack padded"></div>
+          <div id="categoryEditList" class="stack padded"></div>
         </section>
         <section class="panel">
           <div class="panel-head"><h2>데이터 관리</h2></div>

@@ -2,10 +2,12 @@ import { allowedEmails, firebaseConfig } from "./firebase-config.js";
 
 const householdId = "default-household";
 const localKey = "couple-budget-state-v1";
+const defaultTransactionCategories = ["월급", "주거", "용돈", "적금", "교통", "통신", "생활비", "기타"];
 const defaultAllocationCategories = ["주거", "용돈", "적금", "교통", "통신", "생활비"];
 
 const emptyState = {
   transactions: [],
+  transactionCategories: [...defaultTransactionCategories],
   allocations: [],
   allocationCategories: [...defaultAllocationCategories],
   distributions: [],
@@ -46,6 +48,13 @@ const currentSystemMonth = () => new Date().toISOString().slice(0, 7);
 
 function normalizeState() {
   state.transactions ||= [];
+  const storedTransactionCategories = Array.isArray(state.transactionCategories) ? state.transactionCategories : null;
+  state.transactionCategories = [
+    ...new Set((storedTransactionCategories ?? [
+      ...defaultTransactionCategories,
+      ...state.transactions.map((item) => item.category)
+    ]).filter(Boolean))
+  ];
   state.allocations ||= [];
   const storedAllocationCategories = Array.isArray(state.allocationCategories) ? state.allocationCategories : null;
   state.allocationCategories = [
@@ -265,25 +274,40 @@ function renderMonthlyChart() {
   `).join("");
 }
 
-function renderAllocationCategoryControls() {
-  const select = $("#allocationCategorySelect");
-  if (select) {
-    const previous = select.value;
-    select.innerHTML = state.allocationCategories
-      .map((category) => `<option value="${escapeHtml(category)}">${escapeHtml(category)}</option>`)
-      .join("");
-    select.value = previous && state.allocationCategories.includes(previous)
-      ? previous
-      : state.allocationCategories[0] || "";
-  }
+function categoriesForScope(scope) {
+  return scope === "allocations" ? state.allocationCategories : state.transactionCategories;
+}
 
-  const list = $("#allocationCategoryList");
+function categoryScopeLabel(scope) {
+  return scope === "allocations" ? "고정비 지출" : "거래 내역";
+}
+
+function renderCategorySelect(select, categories) {
+  if (!select) return;
+  const previous = select.value;
+  select.innerHTML = categories
+    .map((category) => `<option value="${escapeHtml(category)}">${escapeHtml(category)}</option>`)
+    .join("");
+  select.value = previous && categories.includes(previous) ? previous : categories[0] || "";
+}
+
+function renderCategoryControls() {
+  renderCategorySelect($("#transactionCategorySelect"), state.transactionCategories);
+  renderCategorySelect($("#allocationCategorySelect"), state.allocationCategories);
+
+  const list = $("#categoryEditList");
   if (!list) return;
-  list.innerHTML = state.allocationCategories.map((category) => `
+
+  const scope = $("#categoryScope")?.value || "transactions";
+  const categories = categoriesForScope(scope);
+  list.innerHTML = categories.map((category, index) => `
     <div class="item">
-      <div class="item-row">
-        <strong>${escapeHtml(category)}</strong>
-        <button class="delete-btn" data-delete-allocation-category="${escapeHtml(category)}">삭제</button>
+      <div class="item-row category-edit-row">
+        <input value="${escapeHtml(category)}" data-category-edit-input="${index}" aria-label="${escapeHtml(category)} 항목명">
+        <div class="item-actions">
+          <button class="btn" data-update-category-index="${index}">수정 저장</button>
+          <button class="delete-btn" data-delete-category-index="${index}">제거</button>
+        </div>
       </div>
     </div>
   `).join("");
@@ -378,7 +402,7 @@ function renderSettlement() {
 function renderDeposits() {
   $("#depositTable").innerHTML = state.deposits.map((item) => `
     <tr>
-      <td>${item.name}</td><td>${item.kind}</td><td>${item.startDate}</td><td>${item.maturityDate}</td><td>${item.rate}%</td>
+      <td>${item.name}</td><td>${item.owner || "미지정"}</td><td>${item.kind}</td><td>${item.startDate}</td><td>${item.maturityDate}</td><td>${item.rate}%</td>
       <td class="right">${won(item.amount)}</td>
       <td>
         <button class="btn" data-edit-deposit="${item.id}">수정</button>
@@ -449,7 +473,7 @@ function render() {
   renderMonthSelect();
   renderMetrics();
   renderMonthlyChart();
-  renderAllocationCategoryControls();
+  renderCategoryControls();
   renderLists();
   renderTransactions();
   renderSettlement();
@@ -529,6 +553,28 @@ function completeDistribution(category, date) {
   });
 }
 
+function renameCategoryReferences(scope, previous, next) {
+  if (scope === "transactions") {
+    state.transactions.forEach((item) => {
+      if (item.category === previous) item.category = next;
+    });
+    return;
+  }
+
+  state.allocations.forEach((item) => {
+    if (item.category === previous) item.category = next;
+  });
+  state.distributions.forEach((item) => {
+    if (item.category !== previous) return;
+    item.category = next;
+    const transaction = state.transactions.find((tx) => tx.id === item.transactionId);
+    if (transaction) {
+      transaction.category = next;
+      transaction.memo = `${next} 분배`;
+    }
+  });
+}
+
 async function persist() {
   await saveState();
   if (!remoteReady) render();
@@ -538,16 +584,19 @@ function bindEvents() {
   $$(".nav button").forEach((button) => button.addEventListener("click", () => setView(button.dataset.view)));
   $("#monthSelect").addEventListener("change", render);
   $("#transactionSearch").addEventListener("input", renderTransactions);
-  $("#allocationCategoryForm").addEventListener("submit", async (event) => {
+  $("#categoryScope").addEventListener("change", renderCategoryControls);
+  $("#categoryForm").addEventListener("submit", async (event) => {
     event.preventDefault();
     const data = formData(event.currentTarget);
+    const scope = $("#categoryScope").value;
+    const categories = categoriesForScope(scope);
     const category = data.category.trim();
     if (!category) return;
-    if (state.allocationCategories.includes(category)) {
+    if (categories.includes(category)) {
       event.currentTarget.reset();
       return;
     }
-    state.allocationCategories.push(category);
+    categories.push(category);
     event.currentTarget.reset();
     await persist();
   });
@@ -662,6 +711,7 @@ function bindEvents() {
     const deposit = {
       id: data.id || crypto.randomUUID(),
       name: data.name,
+      owner: data.owner,
       kind: data.kind,
       startDate: data.startDate,
       maturityDate: data.maturityDate,
@@ -733,7 +783,8 @@ function bindEvents() {
     const editDepositId = event.target.dataset.editDeposit;
     const editAllocationCategory = event.target.dataset.editAllocation;
     const deleteAllocationCategory = event.target.dataset.deleteAllocation;
-    const deleteAllocationCategoryOption = event.target.dataset.deleteAllocationCategory;
+    const updateCategoryIndex = event.target.dataset.updateCategoryIndex;
+    const deleteCategoryIndex = event.target.dataset.deleteCategoryIndex;
     const editLoanRepaymentId = event.target.dataset.editLoanRepayment;
     const deleteLoanRepaymentId = event.target.dataset.deleteLoanRepayment;
     const openDistribution = event.target.dataset.openDistribution;
@@ -797,11 +848,36 @@ function bindEvents() {
       return;
     }
 
-    if (deleteAllocationCategoryOption) {
-      const confirmed = confirm(`${deleteAllocationCategoryOption} 항목을 고정비 선택 목록에서 제거할까요? 이미 입력된 고정비 지출 기록은 유지됩니다.`);
+    if (updateCategoryIndex !== undefined) {
+      const scope = $("#categoryScope").value;
+      const categories = categoriesForScope(scope);
+      const index = Number(updateCategoryIndex);
+      const previous = categories[index];
+      const input = document.querySelector(`[data-category-edit-input="${index}"]`);
+      const next = input?.value.trim();
+      if (!previous || !next || previous === next) return;
+      if (categories.some((item, itemIndex) => itemIndex !== index && item === next)) {
+        alert("이미 같은 이름의 항목이 있습니다.");
+        return;
+      }
+      const confirmed = confirm(`${categoryScopeLabel(scope)} 항목 '${previous}'을 '${next}'로 수정할까요? 기존 관련 기록도 함께 변경됩니다.`);
       if (!confirmed) return;
-      state.allocationCategories = state.allocationCategories.filter((item) => item !== deleteAllocationCategoryOption);
+      categories[index] = next;
+      renameCategoryReferences(scope, previous, next);
       normalizeState();
+      await persist();
+      return;
+    }
+
+    if (deleteCategoryIndex !== undefined) {
+      const scope = $("#categoryScope").value;
+      const categories = categoriesForScope(scope);
+      const index = Number(deleteCategoryIndex);
+      const category = categories[index];
+      if (!category) return;
+      const confirmed = confirm(`${categoryScopeLabel(scope)} 항목 '${category}'을 선택 목록에서 제거할까요? 기존 기록은 유지됩니다.`);
+      if (!confirmed) return;
+      categories.splice(index, 1);
       await persist();
       return;
     }
