@@ -350,16 +350,24 @@ input, select {
 }
 
 .chart {
-  min-height: 250px;
+  min-height: 0;
   padding: 18px;
-  background:
-    linear-gradient(to top, #eef1f5 1px, transparent 1px) 0 0 / 100% 25%,
-    #fff;
+  background: #fff;
 }
 
 .monthly-chart {
   display: grid;
-  gap: 14px;
+  gap: 12px;
+}
+
+.monthly-chart-head {
+  display: grid;
+  grid-template-columns: 52px minmax(0, 1fr);
+  gap: 12px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+  padding-bottom: 4px;
 }
 
 .monthly-row {
@@ -367,6 +375,13 @@ input, select {
   grid-template-columns: 52px minmax(0, 1fr);
   gap: 12px;
   align-items: center;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #eef1f5;
+}
+
+.monthly-row:last-child {
+  padding-bottom: 0;
+  border-bottom: 0;
 }
 
 .monthly-label {
@@ -377,18 +392,19 @@ input, select {
 
 .monthly-series {
   display: grid;
-  gap: 6px;
+  gap: 7px;
 }
 
 .monthly-bar-row {
   display: grid;
-  grid-template-columns: 36px minmax(90px, 1fr) 62px;
-  gap: 8px;
+  grid-template-columns: 38px minmax(0, 1fr) 76px;
+  gap: 10px;
   align-items: center;
   font-size: 12px;
+  min-height: 20px;
 }
 
-.monthly-bar-row strong {
+.monthly-value {
   text-align: right;
   font-variant-numeric: tabular-nums;
 }
@@ -399,7 +415,7 @@ input, select {
 }
 
 .monthly-track {
-  height: 10px;
+  height: 12px;
   border-radius: 999px;
   background: #edf1f5;
   overflow: hidden;
@@ -408,34 +424,8 @@ input, select {
 .monthly-track i {
   display: block;
   height: 100%;
-  min-width: 2px;
   border-radius: inherit;
-}
-
-.month-bars {
-  flex: 1;
-  min-width: 54px;
-  height: 200px;
-  display: grid;
-  grid-template-rows: 1fr auto;
-  gap: 8px;
-  text-align: center;
-  color: var(--muted);
-  font-size: 12px;
-}
-
-.bar-pair {
-  display: flex;
-  align-items: end;
-  justify-content: center;
-  gap: 6px;
-  height: 100%;
-}
-
-.bar {
-  width: 18px;
-  min-height: 4px;
-  border-radius: 7px 7px 0 0;
+  transition: width .18s ease;
 }
 
 .income-bar { background: var(--income); }
@@ -586,11 +576,15 @@ th {
   .metric strong { font-size: 21px; }
   h1 { font-size: 24px; }
   .chart { overflow-x: auto; }
+  .monthly-chart-head {
+    grid-template-columns: 1fr;
+    gap: 4px;
+  }
   .monthly-row {
     grid-template-columns: 1fr;
     gap: 6px;
   }
   .monthly-bar-row {
-    grid-template-columns: 34px minmax(120px, 1fr) 58px;
+    grid-template-columns: 34px minmax(120px, 1fr) 68px;
   }
 }

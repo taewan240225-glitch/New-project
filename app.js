@@ -54,8 +54,13 @@ const compactWon = (value) => {
   }
   return won(number);
 };
+const numberFromMoney = (value) => Number(String(value ?? "").replace(/[^0-9]/g, "")) || 0;
+const moneyOrFallback = (value, fallback) => String(value ?? "").trim() ? numberFromMoney(value) : numberFromMoney(fallback);
 const monthOf = (date) => date.slice(0, 7);
-const currentSystemMonth = () => new Date().toISOString().slice(0, 7);
+const currentSystemMonth = () => {
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+};
 
 function normalizeState() {
   state.transactions ||= [];
@@ -79,6 +84,7 @@ function normalizeState() {
   ];
   state.distributions ||= [];
   state.deposits ||= [];
+  refreshCalculatedDepositAmounts();
   state.housingRepayments ||= [];
   state.backups ||= [];
   state.housing ||= { jeonse: 0, ownFund: 0, loan: 0, interest: 0 };
@@ -166,7 +172,7 @@ async function initSync() {
 }
 
 function currentMonth() {
-  return $("#monthSelect").value || "2026-05";
+  return $("#monthSelect").value || currentSystemMonth();
 }
 
 function monthTransactions() {
@@ -215,7 +221,7 @@ function elapsedMonthsInclusive(startMonth, endMonth) {
 }
 
 function depositInputAmount(deposit) {
-  return Number(deposit.amount || 0);
+  return numberFromMoney(deposit.amount);
 }
 
 function depositUsesCalculatedValue(deposit) {
@@ -257,6 +263,16 @@ function depositCurrentAmount(deposit, month = currentSystemMonth()) {
   return amount * elapsedMonthsInclusive(startMonth, endMonth);
 }
 
+function depositSavedCurrentAmount(deposit, month = currentSystemMonth()) {
+  return Math.round(depositCurrentAmount(deposit, month));
+}
+
+function refreshCalculatedDepositAmounts(month = currentSystemMonth()) {
+  state.deposits.forEach((deposit) => {
+    deposit.currentAmount = depositSavedCurrentAmount(deposit, month);
+  });
+}
+
 function totalDepositValue(month = currentSystemMonth()) {
   return state.deposits.reduce((total, item) => total + depositCurrentAmount(item, month), 0);
 }
@@ -278,7 +294,7 @@ function recentDashboardMonths(limit = 12) {
 }
 
 function sum(items, predicate) {
-  return items.filter(predicate).reduce((total, item) => total + Number(item.amount || 0), 0);
+  return items.filter(predicate).reduce((total, item) => total + numberFromMoney(item.amount), 0);
 }
 
 function assetParts() {
@@ -287,16 +303,16 @@ function assetParts() {
   const expense = sum(tx, (item) => item.type === "expense" && item.payer === "공용 통장");
   const sharedCash = income - expense;
   const deposits = totalDepositValue();
-  const housingNet = Math.max(0, Number(state.housing.jeonse || 0) - loanRemaining());
+  const housingNet = Math.max(0, numberFromMoney(state.housing.jeonse) - loanRemaining());
   return { sharedCash, deposits, housingNet, total: sharedCash + deposits + housingNet };
 }
 
 function totalLoanRepayment() {
-  return state.housingRepayments.reduce((total, item) => total + Number(item.amount || 0), 0);
+  return state.housingRepayments.reduce((total, item) => total + numberFromMoney(item.amount), 0);
 }
 
 function loanRemaining() {
-  return Math.max(0, Number(state.housing.loan || 0) - totalLoanRepayment());
+  return Math.max(0, numberFromMoney(state.housing.loan) - totalLoanRepayment());
 }
 
 function renderMonthSelect() {
@@ -338,8 +354,13 @@ function renderMonthlyChart() {
     };
   });
   const max = Math.max(1, ...rows.flatMap((row) => [row.income, row.expense, row.saving]));
+  const barWidth = (value) => value > 0 ? Math.max(4, Math.round((value / max) * 100)) : 0;
   $("#monthlyChart").innerHTML = `
-    <div class="monthly-chart">
+    <div class="monthly-chart" aria-label="월별 수입, 지출, 저축">
+      <div class="monthly-chart-head">
+        <span>월</span>
+        <span>수입 / 지출 / 저축</span>
+      </div>
       ${rows.map((row) => {
         const series = [
           ["income", "수입", row.income],
@@ -353,10 +374,10 @@ function renderMonthlyChart() {
               ${series.map(([type, label, value]) => `
                 <div class="monthly-bar-row">
                   <span class="monthly-bar-name">${label}</span>
-                  <span class="monthly-track">
-                    <i class="${type}-bar" style="width:${Math.max(2, value / max * 100)}%"></i>
+                  <span class="monthly-track" title="${escapeHtml(`${label} ${won(value)}`)}">
+                    <i class="${type}-bar" style="width:${barWidth(value)}%"></i>
                   </span>
-                  <strong>${compactWon(value)}</strong>
+                  <strong class="monthly-value">${compactWon(value)}</strong>
                 </div>
               `).join("")}
             </div>
@@ -501,7 +522,7 @@ function renderDeposits() {
     <tr>
       <td>${item.name}</td><td>${item.owner || "미지정"}</td><td>${item.kind}</td><td>${item.startDate}</td><td>${item.maturityDate}</td><td>${item.rate}%</td>
       <td class="right">${won(depositInputAmount(item))}</td>
-      <td class="right">${won(depositCurrentAmount(item))}</td>
+      <td class="right">${won(item.currentAmount ?? depositCurrentAmount(item))}</td>
       <td>
         <button class="btn" data-edit-deposit="${item.id}">수정</button>
         <button class="delete-btn" data-delete-deposit="${item.id}">삭제</button>
@@ -568,6 +589,7 @@ function renderAssetChart() {
 }
 
 function render() {
+  refreshCalculatedDepositAmounts();
   renderMonthSelect();
   renderMetrics();
   renderMonthlyChart();
@@ -766,7 +788,7 @@ function bindEvents() {
       category: data.category,
       payer: data.payer,
       memo: data.memo,
-      amount: Number(data.amount)
+      amount: numberFromMoney(data.amount)
     };
     const index = state.transactions.findIndex((item) => item.id === transaction.id);
     if (index >= 0) state.transactions[index] = transaction;
@@ -780,7 +802,7 @@ function bindEvents() {
     const data = formData(event.currentTarget);
     if (data.originalCategory && !confirm("고정비 항목 수정을 저장할까요?")) return;
     const originalCategory = data.originalCategory;
-    const amount = Number(data.amount);
+    const amount = numberFromMoney(data.amount);
     const existing = state.allocations.find((item) => item.category === (originalCategory || data.category));
     if (existing) {
       existing.category = data.category;
@@ -817,8 +839,9 @@ function bindEvents() {
       maturityDate: data.maturityDate,
       rate: Number(data.rate),
       calculationType: "subscription",
-      amount: Number(data.amount)
+      amount: numberFromMoney(data.amount)
     };
+    deposit.currentAmount = depositSavedCurrentAmount(deposit);
     const index = state.deposits.findIndex((item) => item.id === deposit.id);
     if (index >= 0) state.deposits[index] = deposit;
     else state.deposits.push(deposit);
@@ -831,10 +854,10 @@ function bindEvents() {
     if (!confirm("주택 자금 정보를 수정할까요?")) return;
     const data = formData(event.currentTarget);
     state.housing = {
-      jeonse: Number(data.jeonse || state.housing.jeonse),
-      ownFund: Number(data.ownFund || state.housing.ownFund),
-      loan: Number(data.loan || state.housing.loan),
-      interest: Number(data.interest || state.housing.interest)
+      jeonse: moneyOrFallback(data.jeonse, state.housing.jeonse),
+      ownFund: moneyOrFallback(data.ownFund, state.housing.ownFund),
+      loan: moneyOrFallback(data.loan, state.housing.loan),
+      interest: moneyOrFallback(data.interest, state.housing.interest)
     };
     await persist();
   });
@@ -850,7 +873,7 @@ function bindEvents() {
       category: "생활비",
       payer: data.payer,
       memo: data.memo,
-      amount: Number(data.amount)
+      amount: numberFromMoney(data.amount)
     };
     const index = state.transactions.findIndex((item) => item.id === settlement.id);
     if (index >= 0) state.transactions[index] = settlement;
@@ -866,7 +889,7 @@ function bindEvents() {
     const repayment = {
       id: data.id || crypto.randomUUID(),
       date: data.date,
-      amount: Number(data.amount),
+      amount: numberFromMoney(data.amount),
       memo: data.memo
     };
     const index = state.housingRepayments.findIndex((item) => item.id === repayment.id);
