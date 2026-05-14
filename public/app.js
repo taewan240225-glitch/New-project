@@ -43,6 +43,17 @@ const escapeHtml = (value) => String(value ?? "").replace(/[&<>"']/g, (char) => 
   "'": "&#39;"
 })[char]);
 const won = (value) => `${Math.round(value || 0).toLocaleString("ko-KR")}원`;
+const compactWon = (value) => {
+  const number = Math.round(value || 0);
+  if (Math.abs(number) >= 100000000) {
+    const formatted = (number / 100000000).toFixed(number % 100000000 === 0 ? 0 : 1);
+    return `${formatted}억`;
+  }
+  if (Math.abs(number) >= 10000) {
+    return `${Math.round(number / 10000).toLocaleString("ko-KR")}만`;
+  }
+  return won(number);
+};
 const monthOf = (date) => date.slice(0, 7);
 const currentSystemMonth = () => new Date().toISOString().slice(0, 7);
 
@@ -56,6 +67,9 @@ function normalizeState() {
     ]).filter(Boolean))
   ];
   state.allocations ||= [];
+  state.allocations.forEach((item) => {
+    item.owner ||= "";
+  });
   const storedAllocationCategories = Array.isArray(state.allocationCategories) ? state.allocationCategories : null;
   state.allocationCategories = [
     ...new Set((storedAllocationCategories ?? [
@@ -184,10 +198,72 @@ function depositActiveInMonth(deposit, month) {
   return (!startMonth || startMonth <= month) && (!maturityMonth || month <= maturityMonth);
 }
 
+function monthIndex(month) {
+  const [year, monthNumber] = month.split("-").map(Number);
+  return year * 12 + monthNumber;
+}
+
+function minMonth(first, second) {
+  if (!first) return second;
+  if (!second) return first;
+  return monthIndex(first) <= monthIndex(second) ? first : second;
+}
+
+function elapsedMonthsInclusive(startMonth, endMonth) {
+  if (!startMonth || !endMonth || monthIndex(endMonth) < monthIndex(startMonth)) return 0;
+  return monthIndex(endMonth) - monthIndex(startMonth) + 1;
+}
+
+function depositInputAmount(deposit) {
+  return Number(deposit.amount || 0);
+}
+
+function depositUsesCalculatedValue(deposit) {
+  return deposit.calculationType === "subscription";
+}
+
+function depositContributionForMonth(deposit, month) {
+  const amount = depositInputAmount(deposit);
+  const startMonth = deposit.startDate ? monthOf(deposit.startDate) : "";
+  if (!amount || !startMonth) return 0;
+
+  if (!depositUsesCalculatedValue(deposit)) {
+    return startMonth === month ? amount : 0;
+  }
+
+  if (deposit.kind === "적금") {
+    return depositActiveInMonth(deposit, month) ? amount : 0;
+  }
+  return startMonth === month ? amount : 0;
+}
+
+function depositCurrentAmount(deposit, month = currentSystemMonth()) {
+  const amount = depositInputAmount(deposit);
+  const startMonth = deposit.startDate ? monthOf(deposit.startDate) : "";
+  if (!amount) return 0;
+
+  if (!depositUsesCalculatedValue(deposit)) {
+    return amount;
+  }
+  if (!startMonth || monthIndex(month) < monthIndex(startMonth)) {
+    return 0;
+  }
+  if (deposit.kind !== "적금") {
+    return amount;
+  }
+
+  const maturityMonth = deposit.maturityDate ? monthOf(deposit.maturityDate) : "";
+  const endMonth = minMonth(month, maturityMonth || month);
+  return amount * elapsedMonthsInclusive(startMonth, endMonth);
+}
+
+function totalDepositValue(month = currentSystemMonth()) {
+  return state.deposits.reduce((total, item) => total + depositCurrentAmount(item, month), 0);
+}
+
 function savingsForMonth(month) {
   return state.deposits
-    .filter((item) => depositActiveInMonth(item, month))
-    .reduce((total, item) => total + Number(item.amount || 0), 0);
+    .reduce((total, item) => total + depositContributionForMonth(item, month), 0);
 }
 
 function recentDashboardMonths(limit = 12) {
@@ -195,7 +271,7 @@ function recentDashboardMonths(limit = 12) {
   const monthsWithData = new Set(state.transactions.map((item) => monthOf(item.date)));
   state.deposits.forEach((item) => {
     range.forEach((month) => {
-      if (depositActiveInMonth(item, month)) monthsWithData.add(month);
+      if (depositContributionForMonth(item, month) > 0) monthsWithData.add(month);
     });
   });
   return range.filter((month) => monthsWithData.has(month));
@@ -210,7 +286,7 @@ function assetParts() {
   const income = sum(tx, (item) => item.type === "income");
   const expense = sum(tx, (item) => item.type === "expense" && item.payer === "공용 통장");
   const sharedCash = income - expense;
-  const deposits = state.deposits.reduce((total, item) => total + Number(item.amount || 0), 0);
+  const deposits = totalDepositValue();
   const housingNet = Math.max(0, Number(state.housing.jeonse || 0) - loanRemaining());
   return { sharedCash, deposits, housingNet, total: sharedCash + deposits + housingNet };
 }
@@ -262,16 +338,33 @@ function renderMonthlyChart() {
     };
   });
   const max = Math.max(1, ...rows.flatMap((row) => [row.income, row.expense, row.saving]));
-  $("#monthlyChart").innerHTML = rows.map((row) => `
-    <div class="month-bars">
-      <div class="bar-pair">
-        <span class="bar income-bar" title="수입 ${won(row.income)}" style="height:${Math.max(4, row.income / max * 190)}px"></span>
-        <span class="bar expense-bar" title="지출 ${won(row.expense)}" style="height:${Math.max(4, row.expense / max * 190)}px"></span>
-        <span class="bar saving-bar" title="저축 ${won(row.saving)}" style="height:${Math.max(4, row.saving / max * 190)}px"></span>
-      </div>
-      <span>${Number(row.month.slice(5))}월</span>
+  $("#monthlyChart").innerHTML = `
+    <div class="monthly-chart">
+      ${rows.map((row) => {
+        const series = [
+          ["income", "수입", row.income],
+          ["expense", "지출", row.expense],
+          ["saving", "저축", row.saving]
+        ];
+        return `
+          <div class="monthly-row">
+            <strong class="monthly-label">${row.month.slice(2).replace("-", ".")}</strong>
+            <div class="monthly-series">
+              ${series.map(([type, label, value]) => `
+                <div class="monthly-bar-row">
+                  <span class="monthly-bar-name">${label}</span>
+                  <span class="monthly-track">
+                    <i class="${type}-bar" style="width:${Math.max(2, value / max * 100)}%"></i>
+                  </span>
+                  <strong>${compactWon(value)}</strong>
+                </div>
+              `).join("")}
+            </div>
+          </div>
+        `;
+      }).join("")}
     </div>
-  `).join("");
+  `;
 }
 
 function categoriesForScope(scope) {
@@ -315,7 +408,10 @@ function renderCategoryControls() {
 
 function renderLists() {
   $("#allocationList").innerHTML = state.allocations.map((item) => `
-    <div class="item"><div class="item-row"><strong>${item.category}</strong><span>${won(item.amount)}</span></div></div>
+    <div class="item">
+      <div class="item-row"><strong>${item.category}</strong><span>${won(item.amount)}</span></div>
+      <span class="muted">${item.owner || "담당자 미지정"}</span>
+    </div>
   `).join("");
 
   $("#budgetList").innerHTML = state.allocations.map((item) => {
@@ -329,6 +425,7 @@ function renderLists() {
           </label>
           <span>${won(item.amount)}</span>
         </div>
+        <span class="muted">${item.owner || "담당자 미지정"}</span>
         <div class="item-actions">
           <button class="btn" data-edit-allocation="${item.category}">수정</button>
           <button class="delete-btn" data-delete-allocation="${item.category}">삭제</button>
@@ -403,7 +500,8 @@ function renderDeposits() {
   $("#depositTable").innerHTML = state.deposits.map((item) => `
     <tr>
       <td>${item.name}</td><td>${item.owner || "미지정"}</td><td>${item.kind}</td><td>${item.startDate}</td><td>${item.maturityDate}</td><td>${item.rate}%</td>
-      <td class="right">${won(item.amount)}</td>
+      <td class="right">${won(depositInputAmount(item))}</td>
+      <td class="right">${won(depositCurrentAmount(item))}</td>
       <td>
         <button class="btn" data-edit-deposit="${item.id}">수정</button>
         <button class="delete-btn" data-delete-deposit="${item.id}">삭제</button>
@@ -548,7 +646,7 @@ function completeDistribution(category, date) {
     type: "expense",
     category,
     payer: "공용 통장",
-    memo: `${category} 분배`,
+    memo: `${category} 분배${allocation.owner ? ` · ${allocation.owner}` : ""}`,
     amount: Number(allocation.amount || 0)
   });
 }
@@ -570,7 +668,8 @@ function renameCategoryReferences(scope, previous, next) {
     const transaction = state.transactions.find((tx) => tx.id === item.transactionId);
     if (transaction) {
       transaction.category = next;
-      transaction.memo = `${next} 분배`;
+      const allocation = state.allocations.find((entry) => entry.category === next);
+      transaction.memo = `${next} 분배${allocation?.owner ? ` · ${allocation.owner}` : ""}`;
     }
   });
 }
@@ -685,6 +784,7 @@ function bindEvents() {
     const existing = state.allocations.find((item) => item.category === (originalCategory || data.category));
     if (existing) {
       existing.category = data.category;
+      existing.owner = data.owner || "";
       existing.amount = amount;
       state.distributions
         .filter((item) => item.category === (originalCategory || data.category))
@@ -693,12 +793,12 @@ function bindEvents() {
           const transaction = state.transactions.find((tx) => tx.id === item.transactionId);
           if (transaction) {
             transaction.category = data.category;
-            transaction.memo = `${data.category} 분배`;
+            transaction.memo = `${data.category} 분배${data.owner ? ` · ${data.owner}` : ""}`;
             transaction.amount = amount;
           }
         });
     } else {
-      state.allocations.push({ category: data.category, amount });
+      state.allocations.push({ category: data.category, owner: data.owner || "", amount });
     }
     resetEditForm(event.currentTarget, $("#allocationSubmit"), $("#allocationCancel"), "저장");
     await persist();
@@ -716,6 +816,7 @@ function bindEvents() {
       startDate: data.startDate,
       maturityDate: data.maturityDate,
       rate: Number(data.rate),
+      calculationType: "subscription",
       amount: Number(data.amount)
     };
     const index = state.deposits.findIndex((item) => item.id === deposit.id);
@@ -823,7 +924,7 @@ function bindEvents() {
     if (editAllocationCategory) {
       const allocation = state.allocations.find((item) => item.category === editAllocationCategory);
       if (!allocation) return;
-      fillForm($("#allocationForm"), { originalCategory: allocation.category, category: allocation.category, amount: allocation.amount });
+      fillForm($("#allocationForm"), { originalCategory: allocation.category, category: allocation.category, owner: allocation.owner || "", amount: allocation.amount });
       $("#allocationSubmit").textContent = "수정 저장";
       $("#allocationCancel").classList.remove("hidden");
       setView("budgets");
