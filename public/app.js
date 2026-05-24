@@ -57,6 +57,10 @@ const compactWon = (value) => {
 };
 const numberFromMoney = (value) => Number(String(value ?? "").replace(/[^0-9]/g, "")) || 0;
 const moneyOrFallback = (value, fallback) => String(value ?? "").trim() ? numberFromMoney(value) : numberFromMoney(fallback);
+const moneyInputValue = (value) => {
+  const number = numberFromMoney(value);
+  return number ? number.toLocaleString("ko-KR") : "";
+};
 const monthOf = (date) => date.slice(0, 7);
 const currentSystemMonth = () => {
   const now = new Date();
@@ -585,6 +589,7 @@ function renderHousing() {
   $("#ownFundValue").textContent = won(state.housing.ownFund);
   $("#loanValue").textContent = won(loanRemaining());
   $("#interestValue").textContent = won(state.housing.interest);
+  fillHousingForm();
   $("#loanRepaymentList").innerHTML = state.housingRepayments
     .slice()
     .sort((a, b) => b.date.localeCompare(a.date))
@@ -700,6 +705,14 @@ function resetEditForm(form, submitButton, cancelButton, submitText) {
   if (form.elements.originalCategory) form.elements.originalCategory.value = "";
   submitButton.textContent = submitText;
   cancelButton.classList.add("hidden");
+}
+
+function fillHousingForm() {
+  const form = $("#housingForm");
+  if (!form || form.contains(document.activeElement)) return;
+  ["jeonse", "ownFund", "loan", "interest"].forEach((name) => {
+    if (form.elements[name]) form.elements[name].value = moneyInputValue(state.housing[name]);
+  });
 }
 
 function completeDistribution(allocationId, date) {
