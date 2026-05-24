@@ -141,16 +141,20 @@
       <section id="budgetsView" class="view">
         <section class="panel">
           <div class="panel-head"><h2>고정비 지출</h2></div>
-          <form id="allocationForm" class="form-grid compact">
+          <form id="allocationForm" class="form-grid compact allocation-form">
+            <input name="id" type="hidden">
             <input name="originalCategory" type="hidden">
             <select id="allocationCategorySelect" name="category">
               <option>주거</option><option>용돈</option><option>적금</option><option>교통</option><option>통신</option><option>생활비</option>
             </select>
+            <input name="detail" placeholder="상세 항목">
             <select name="owner">
               <option value="">담당자 선택</option>
               <option>김태완</option>
               <option>정윤희</option>
             </select>
+            <input name="bank" placeholder="거래은행">
+            <input name="account" placeholder="계좌번호">
             <input name="amount" type="text" inputmode="numeric" placeholder="월 배정액">
             <button id="allocationSubmit" class="btn primary">저장</button>
             <button id="allocationCancel" class="btn hidden" type="button">취소</button>

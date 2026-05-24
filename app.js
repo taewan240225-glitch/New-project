@@ -21,6 +21,7 @@ let state = structuredClone(emptyState);
 let saveState = () => localStorage.setItem(localKey, JSON.stringify(state));
 let remoteReady = false;
 let authApi = null;
+let remoteSnapshotHadUserData = false;
 
 const titles = {
   dashboard: ["대시보드", "월별 수입, 지출, 자산 흐름을 확인합니다."],
@@ -61,6 +62,24 @@ const currentSystemMonth = () => {
   const now = new Date();
   return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
 };
+const newId = () => crypto.randomUUID();
+
+function stateHasUserData(source = state) {
+  return [
+    source.transactions,
+    source.allocations,
+    source.deposits,
+    source.housingRepayments
+  ].some((items) => Array.isArray(items) && items.length > 0)
+    || numberFromMoney(source.housing?.jeonse) > 0
+    || numberFromMoney(source.housing?.ownFund) > 0
+    || numberFromMoney(source.housing?.loan) > 0
+    || numberFromMoney(source.housing?.interest) > 0;
+}
+
+function stateHasBackup(source = state) {
+  return Array.isArray(source.backups) && source.backups.length > 0;
+}
 
 function normalizeState() {
   state.transactions ||= [];
@@ -73,7 +92,11 @@ function normalizeState() {
   ];
   state.allocations ||= [];
   state.allocations.forEach((item) => {
+    item.id ||= newId();
+    item.detail ||= "";
     item.owner ||= "";
+    item.bank ||= "";
+    item.account ||= "";
   });
   const storedAllocationCategories = Array.isArray(state.allocationCategories) ? state.allocationCategories : null;
   state.allocationCategories = [
@@ -130,7 +153,13 @@ async function initSync() {
       logout: () => authMod.signOut(auth)
     };
 
-    saveState = async () => dbMod.setDoc(docRef, state);
+    saveState = async () => {
+      if (remoteSnapshotHadUserData && !stateHasUserData(state) && !stateHasBackup(state)) {
+        throw new Error("데이터가 있는 Firestore 문서를 빈 상태로 덮어쓰는 저장을 차단했습니다.");
+      }
+      await dbMod.setDoc(docRef, state);
+      remoteSnapshotHadUserData = stateHasUserData(state);
+    };
 
     authMod.onAuthStateChanged(auth, async (user) => {
       const email = user?.email || "";
@@ -155,6 +184,7 @@ async function initSync() {
         if (snapshot.exists()) {
           state = snapshot.data();
           normalizeState();
+          remoteSnapshotHadUserData = stateHasUserData(state);
         } else {
           await saveState();
         }
@@ -427,35 +457,54 @@ function renderCategoryControls() {
   `).join("");
 }
 
+function allocationTitle(item) {
+  return item.detail ? `${item.category} · ${item.detail}` : item.category;
+}
+
+function allocationMeta(item) {
+  return [
+    item.owner || "해당자 미지정",
+    item.bank,
+    item.account
+  ].filter(Boolean).join(" · ");
+}
+
+function allocationDistributionMemo(item) {
+  return `${allocationTitle(item)} 분배${item.owner ? ` · ${item.owner}` : ""}`;
+}
+
 function renderLists() {
   $("#allocationList").innerHTML = state.allocations.map((item) => `
     <div class="item">
-      <div class="item-row"><strong>${item.category}</strong><span>${won(item.amount)}</span></div>
-      <span class="muted">${item.owner || "담당자 미지정"}</span>
+      <div class="item-row"><strong>${escapeHtml(allocationTitle(item))}</strong><span>${won(item.amount)}</span></div>
+      <span class="muted">${escapeHtml(allocationMeta(item))}</span>
     </div>
   `).join("");
 
   $("#budgetList").innerHTML = state.allocations.map((item) => {
-    const done = state.distributions.find((entry) => entry.month === currentMonth() && entry.category === item.category);
+    const done = state.distributions.find((entry) =>
+      entry.month === currentMonth()
+      && (entry.allocationId === item.id || (!entry.allocationId && entry.category === item.category))
+    );
     return `
       <div class="item ${done ? "completed" : ""}">
         <div class="item-row">
           <label class="check-row">
-            <input type="checkbox" data-open-distribution="${item.category}" ${done ? "checked disabled" : ""}>
-            <strong>${item.category}</strong>
+            <input type="checkbox" data-open-distribution="${item.id}" ${done ? "checked disabled" : ""}>
+            <strong>${escapeHtml(allocationTitle(item))}</strong>
           </label>
           <span>${won(item.amount)}</span>
         </div>
-        <span class="muted">${item.owner || "담당자 미지정"}</span>
+        <span class="muted">${escapeHtml(allocationMeta(item))}</span>
         <div class="item-actions">
-          <button class="btn" data-edit-allocation="${item.category}">수정</button>
-          <button class="delete-btn" data-delete-allocation="${item.category}">삭제</button>
+          <button class="btn" data-edit-allocation="${item.id}">수정</button>
+          <button class="delete-btn" data-delete-allocation="${item.id}">삭제</button>
         </div>
         ${done
           ? `<span class="status-pill">${done.date} 분배 완료</span>`
-          : `<div class="distribution-actions" data-date-panel="${item.category}">
-              <input type="date" data-distribution-date="${item.category}" value="${currentMonth()}-01">
-              <button class="btn primary" data-confirm-distribution="${item.category}">확인</button>
+          : `<div class="distribution-actions" data-date-panel="${item.id}">
+              <input type="date" data-distribution-date="${item.id}" value="${currentMonth()}-01">
+              <button class="btn primary" data-confirm-distribution="${item.id}">확인</button>
             </div>`
         }
       </div>
@@ -653,23 +702,26 @@ function resetEditForm(form, submitButton, cancelButton, submitText) {
   cancelButton.classList.add("hidden");
 }
 
-function completeDistribution(category, date) {
-  const allocation = state.allocations.find((item) => item.category === category);
+function completeDistribution(allocationId, date) {
+  const allocation = state.allocations.find((item) => item.id === allocationId || item.category === allocationId);
   if (!allocation || !date) return;
 
-  const alreadyDone = state.distributions.some((entry) => entry.month === currentMonth() && entry.category === category);
+  const alreadyDone = state.distributions.some((entry) =>
+    entry.month === currentMonth()
+    && (entry.allocationId === allocation.id || (!entry.allocationId && entry.category === allocation.category))
+  );
   if (alreadyDone) return;
 
   const transactionId = crypto.randomUUID();
-  state.distributions.push({ month: currentMonth(), category, date, transactionId });
+  state.distributions.push({ month: currentMonth(), allocationId: allocation.id, category: allocation.category, date, transactionId });
   state.transactions.push({
     id: transactionId,
     date,
     type: "expense",
-    category,
+    category: allocation.category,
     payer: "공용 통장",
-    memo: `${category} 분배${allocation.owner ? ` · ${allocation.owner}` : ""}`,
-    amount: Number(allocation.amount || 0)
+    memo: allocationDistributionMemo(allocation),
+    amount: numberFromMoney(allocation.amount)
   });
 }
 
@@ -691,7 +743,7 @@ function renameCategoryReferences(scope, previous, next) {
     if (transaction) {
       transaction.category = next;
       const allocation = state.allocations.find((entry) => entry.category === next);
-      transaction.memo = `${next} 분배${allocation?.owner ? ` · ${allocation.owner}` : ""}`;
+      transaction.memo = allocation ? allocationDistributionMemo(allocation) : `${next} 분배`;
     }
   });
 }
@@ -724,6 +776,8 @@ function bindEvents() {
   $("#resetButton").addEventListener("click", async () => {
     const confirmed = confirm("현재 데이터를 백업한 뒤 모든 가계부 데이터를 빈 상태로 초기화할까요?");
     if (!confirmed) return;
+    const typed = prompt("초기화를 진행하려면 '초기화'를 입력하세요.");
+    if (typed !== "초기화") return;
     const backups = withNewBackup("전체 초기화 전 백업");
     state = structuredClone(emptyState);
     state.backups = backups;
@@ -800,27 +854,34 @@ function bindEvents() {
   $("#allocationForm").addEventListener("submit", async (event) => {
     event.preventDefault();
     const data = formData(event.currentTarget);
-    if (data.originalCategory && !confirm("고정비 항목 수정을 저장할까요?")) return;
+    if (data.id && !confirm("고정비 항목 수정을 저장할까요?")) return;
     const originalCategory = data.originalCategory;
-    const amount = numberFromMoney(data.amount);
-    const existing = state.allocations.find((item) => item.category === (originalCategory || data.category));
-    if (existing) {
-      existing.category = data.category;
-      existing.owner = data.owner || "";
-      existing.amount = amount;
+    const allocation = {
+      id: data.id || newId(),
+      category: data.category,
+      detail: data.detail?.trim() || "",
+      owner: data.owner || "",
+      bank: data.bank?.trim() || "",
+      account: data.account?.trim() || "",
+      amount: numberFromMoney(data.amount)
+    };
+    const index = state.allocations.findIndex((item) => item.id === allocation.id);
+    if (index >= 0) {
+      state.allocations[index] = allocation;
       state.distributions
-        .filter((item) => item.category === (originalCategory || data.category))
+        .filter((item) => item.allocationId === allocation.id || (!item.allocationId && item.category === originalCategory))
         .forEach((item) => {
-          item.category = data.category;
+          item.allocationId = allocation.id;
+          item.category = allocation.category;
           const transaction = state.transactions.find((tx) => tx.id === item.transactionId);
           if (transaction) {
-            transaction.category = data.category;
-            transaction.memo = `${data.category} 분배${data.owner ? ` · ${data.owner}` : ""}`;
-            transaction.amount = amount;
+            transaction.category = allocation.category;
+            transaction.memo = allocationDistributionMemo(allocation);
+            transaction.amount = allocation.amount;
           }
         });
     } else {
-      state.allocations.push({ category: data.category, owner: data.owner || "", amount });
+      state.allocations.push(allocation);
     }
     resetEditForm(event.currentTarget, $("#allocationSubmit"), $("#allocationCancel"), "저장");
     await persist();
@@ -945,9 +1006,18 @@ function bindEvents() {
     }
 
     if (editAllocationCategory) {
-      const allocation = state.allocations.find((item) => item.category === editAllocationCategory);
+      const allocation = state.allocations.find((item) => item.id === editAllocationCategory || item.category === editAllocationCategory);
       if (!allocation) return;
-      fillForm($("#allocationForm"), { originalCategory: allocation.category, category: allocation.category, owner: allocation.owner || "", amount: allocation.amount });
+      fillForm($("#allocationForm"), {
+        id: allocation.id,
+        originalCategory: allocation.category,
+        category: allocation.category,
+        detail: allocation.detail || "",
+        owner: allocation.owner || "",
+        bank: allocation.bank || "",
+        account: allocation.account || "",
+        amount: allocation.amount
+      });
       $("#allocationSubmit").textContent = "수정 저장";
       $("#allocationCancel").classList.remove("hidden");
       setView("budgets");
@@ -1007,10 +1077,14 @@ function bindEvents() {
     }
 
     if (deleteAllocationCategory) {
-      const confirmed = confirm(`${deleteAllocationCategory} 고정비 항목을 삭제할까요? 이미 생성된 거래 내역은 유지됩니다.`);
+      const allocation = state.allocations.find((item) => item.id === deleteAllocationCategory || item.category === deleteAllocationCategory);
+      if (!allocation) return;
+      const confirmed = confirm(`${allocationTitle(allocation)} 고정비 항목을 삭제할까요? 이미 생성된 거래 내역은 유지됩니다.`);
       if (!confirmed) return;
-      state.allocations = state.allocations.filter((item) => item.category !== deleteAllocationCategory);
-      state.distributions = state.distributions.filter((item) => item.category !== deleteAllocationCategory);
+      state.allocations = state.allocations.filter((item) => item.id !== allocation.id);
+      state.distributions = state.distributions.filter((item) =>
+        item.allocationId !== allocation.id && !(item.category === allocation.category && !item.allocationId)
+      );
       await persist();
       return;
     }

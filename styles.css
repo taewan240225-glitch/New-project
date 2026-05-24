@@ -474,6 +474,14 @@ input, select {
   grid-template-columns: repeat(5, minmax(0, 1fr));
 }
 
+.form-grid.allocation-form {
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+}
+
+.form-grid.allocation-form input[name="account"] {
+  grid-column: span 2;
+}
+
 .table-wrap {
   overflow-x: auto;
 }
@@ -561,6 +569,12 @@ th {
   .form-grid,
   .form-grid.compact {
     grid-template-columns: 1fr;
+  }
+  .form-grid.allocation-form {
+    grid-template-columns: 1fr;
+  }
+  .form-grid.allocation-form input[name="account"] {
+    grid-column: auto;
   }
   .mobile-date-field {
     display: grid;
