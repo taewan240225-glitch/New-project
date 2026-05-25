@@ -475,7 +475,7 @@ input, select {
 }
 
 .form-grid.allocation-form {
-  grid-template-columns: repeat(6, minmax(0, 1fr));
+  grid-template-columns: repeat(7, minmax(0, 1fr));
 }
 
 .form-grid.allocation-form input[name="account"] {

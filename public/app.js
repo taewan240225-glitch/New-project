@@ -62,6 +62,10 @@ const moneyInputValue = (value) => {
   return number ? number.toLocaleString("ko-KR") : "";
 };
 const monthOf = (date) => date.slice(0, 7);
+const dayNumber = (value) => {
+  const day = Number(String(value ?? "").replace(/[^0-9]/g, ""));
+  return day >= 1 && day <= 31 ? day : "";
+};
 const currentSystemMonth = () => {
   const now = new Date();
   return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
@@ -101,6 +105,7 @@ function normalizeState() {
     item.owner ||= "";
     item.bank ||= "";
     item.account ||= "";
+    item.transferDay = dayNumber(item.transferDay || item.autoTransferDay);
   });
   const storedAllocationCategories = Array.isArray(state.allocationCategories) ? state.allocationCategories : null;
   state.allocationCategories = [
@@ -469,12 +474,20 @@ function allocationMeta(item) {
   return [
     item.owner || "해당자 미지정",
     item.bank,
-    item.account
+    item.account,
+    item.transferDay ? `매월 ${item.transferDay}일` : ""
   ].filter(Boolean).join(" · ");
 }
 
 function allocationDistributionMemo(item) {
   return `${allocationTitle(item)} 분배${item.owner ? ` · ${item.owner}` : ""}`;
+}
+
+function allocationDefaultDate(item) {
+  const day = dayNumber(item.transferDay) || 1;
+  const [year, month] = currentMonth().split("-").map(Number);
+  const lastDay = new Date(year, month, 0).getDate();
+  return `${currentMonth()}-${String(Math.min(day, lastDay)).padStart(2, "0")}`;
 }
 
 function renderLists() {
@@ -507,7 +520,7 @@ function renderLists() {
         ${done
           ? `<span class="status-pill">${done.date} 분배 완료</span>`
           : `<div class="distribution-actions" data-date-panel="${item.id}">
-              <input type="date" data-distribution-date="${item.id}" value="${currentMonth()}-01">
+              <input type="date" data-distribution-date="${item.id}" value="${allocationDefaultDate(item)}">
               <button class="btn primary" data-confirm-distribution="${item.id}">확인</button>
             </div>`
         }
@@ -876,6 +889,7 @@ function bindEvents() {
       owner: data.owner || "",
       bank: data.bank?.trim() || "",
       account: data.account?.trim() || "",
+      transferDay: dayNumber(data.transferDay),
       amount: numberFromMoney(data.amount)
     };
     const index = state.allocations.findIndex((item) => item.id === allocation.id);
@@ -1029,6 +1043,7 @@ function bindEvents() {
         owner: allocation.owner || "",
         bank: allocation.bank || "",
         account: allocation.account || "",
+        transferDay: allocation.transferDay || "",
         amount: allocation.amount
       });
       $("#allocationSubmit").textContent = "수정 저장";
